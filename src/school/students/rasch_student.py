@@ -34,7 +34,7 @@ class RashStudent(Student):
         for skill, difficulty in task.taskDifficulties.items():
             logit_p = self._proficiency[skill] - difficulty
             probasToSolve[skill] = expit(logit_p)
-        probaToSolve = probasToSolve.mean(where=probasToSolve != 0)
+        probaToSolve = np.mean(probasToSolve[probasToSolve != 0])
         mark = 1 if random.random() < probaToSolve else 0
         taskResult = Result(mark, -1, task, self.id, isExam=isExam)
         if not isExam:

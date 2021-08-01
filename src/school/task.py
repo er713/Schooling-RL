@@ -17,7 +17,7 @@ class Task:
             self.id = taskId
         else:
             raise Exception("When copping task, you have to specify existing task ID.")
-        self.taskDifficulties = taskDifficulties
+        self.taskDifficulties: Dict[int, float] = taskDifficulties
 
     @classmethod
     def generate_random_task(cls, nSkills: int, minSkill: int = 1, maxSkill: int = None,
@@ -49,4 +49,11 @@ class Task:
 
     def __deepcopy__(self, memo):
         return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)
+
+    def __str__(self):
+        return f'taskID: {str(self.id)}, difficulties : {str(list(self.taskDifficulties.items()))}'
+
+    @staticmethod
+    def reset_index():
+        Task._id = 0
 

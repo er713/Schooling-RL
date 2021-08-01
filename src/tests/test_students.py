@@ -11,7 +11,7 @@ class MockTeacher(Teacher):
     def choose_task(self, student) -> Task:
         return choice(self.tasks)
 
-    def receive_result(self, result) -> None:
+    def receive_result(self, result, reward=None, last=False) -> None:
         pass
 
 

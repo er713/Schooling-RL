@@ -7,75 +7,79 @@ import numpy as np
 
 class BaseTeacher(Teacher):
 
-
-    def __init__(self, nSkills: int, tasks: List[Task], estimateDifficulty: bool = True, **kwargs) -> None:
-        copiedTasks = [deepcopy(task) for task in tasks]
+    def __init__(self, nSkills: int, tasks: List[Task], estimateDifficulty: bool = False, noExamTasks=None, **kwargs) -> None:
+        copiedTasks = [BaseTeacherTask(task) for task in tasks]
+        # set all estimated difficulties to 0 if difficulties need to be estimated
+        self.originalTasks = tasks
+        if estimateDifficulty:
+            for task in copiedTasks:
+                for skillNo in task.taskDifficulties.keys():
+                    task.taskDifficulties[skillNo]=np.inf
         super().__init__(tasks=copiedTasks, nSkills=nSkills, **kwargs)
-        self.studentsProficiencies = {}
+        self.studentsNoSolvedTasks= {}
         self.estimateDifficulty = estimateDifficulty
+        self.noExamTasks = noExamTasks
+        self.noReceivedExamResults={}
 
     def choose_task(self, student) -> Task:
-        studentProficiencies = None
-        if student.id in self.studentsProficiencies:
-            studentProficiencies = self.studentsProficiencies[student.id]
+        if student.id in self.studentsNoSolvedTasks:
+            noSolvedTasks = self.studentsNoSolvedTasks[student.id]
         else:
-            studentProficiencies = self.__get_new_student_proff()
+            noSolvedTasks = self.__get_new_student_task_counter()
             # add new student.id to studentProf dict
-            self.studentsProficiencies[student.id] = studentProficiencies
-        skillNum = np.argmin(studentProficiencies)
-        studentProficiency = studentProficiencies[skillNum]
-
-        # finding task with the most similar difficulty to student's efficiency
-        min_diff = np.inf
+            self.studentsNoSolvedTasks[student.id] = noSolvedTasks
+        # find skill in which student trained the least
+        skillNum = np.argmin(noSolvedTasks)
+        # finding task with the highest difficulty for given skill
+        max_diff = -np.inf
         best_task = None
         for task in self.tasks:
             if skillNum in task.taskDifficulties:
-                diff = abs(studentProficiency - task.taskDifficulties[skillNum])
-                if diff < min_diff:
-                    min_diff = diff
+                curr_diff= task.taskDifficulties[skillNum]
+                if curr_diff > max_diff:
+                    max_diff = curr_diff
                     best_task = task
-            else:
-                continue
-        return best_task
+        original_best_task=[task for task in self.originalTasks if task.id==best_task.id][0]
+        return original_best_task
 
-    def receive_result(self, result) -> None:
-        baseProfScaler = 0.1
-        baseDiffScaler = 0.01
-        unknownTask = False
-        try:
-            # if it was exam task reset record of student's proficiencies
-            if result.isExam:
-                self.studentsProficiencies[result.idStudent] = self.__get_new_student_proff()
-                return
-            studentProficiencies = self.studentsProficiencies[result.idStudent]
-        except KeyError:
-            raise KeyError(
-                "StudentId: " + str(result.idStudent) + " hand out result, without asking for any task before.")
-        mark = result.mark
-        taskId = result.task.id
-        # Check if result's task exists in teacher's tasks pool
-        if result.task.id in [task.id for task in self.tasks]:
-            estimatedTask = [task for task in self.tasks if task.id == taskId][0]
-        else:
-            unknownTask = True
-            estimatedTask = result.task
-        relativeDifficulties = {}
-        # calculate relative difficulties
-        for skillNo, difficulty in estimatedTask.taskDifficulties.items():
-            relativeDifficulties[skillNo] = difficulty - studentProficiencies[skillNo]
-        correctionScaler = {}
-        # update estimate of student's proficiency and difficulty of task's copy if needed
-        for skillNo, relativeDifficulty in relativeDifficulties.items():
-            if mark == 1:
-                correctionScaler[skillNo] = 1 + max([relativeDifficulty, -1])
-            else:
-                correctionScaler[skillNo] = -(1 - min([relativeDifficulty, 1]))
-            studentProficiencies[skillNo] += baseProfScaler * correctionScaler[skillNo]
-            if self.estimateDifficulty and not unknownTask:
-                estimatedTask.taskDifficulties[skillNo] -= baseDiffScaler * correctionScaler[skillNo]
+    def receive_result(self, result, reward=None, last=None) -> None:
+        if result.isExam:
+            self.__receive_exam_result(result)
+            return
+        noSolvedTasks=self.studentsNoSolvedTasks[result.idStudent]
+        for skillNo in result.task.taskDifficulties:
+            noSolvedTasks[skillNo]+=1
+        # select result task copy for difficulty estimation
+        if self.estimateDifficulty:
+            estimatedTask=[task for task in self.tasks if task.id==result.task.id][0]
+            estimatedTask.update_task_estimation(result)
 
-    def __get_new_student_proff(self):
-        return self.nSkills * [0]
-      
-    def __str__(self):
-        return 'BaseTeacher'
+    def __get_new_student_task_counter(self):
+        return self.nSkills * [int(0)]
+
+    def __receive_exam_result(self, result):
+        studentId = result.idStudent
+        assert result.isExam
+        if result.idStudent not in self.noReceivedExamResults:
+            self.noReceivedExamResults[studentId] = 0
+        self.noReceivedExamResults[studentId] += 1
+        if self.noReceivedExamResults[studentId] == self.noExamTasks:
+            self.noReceivedExamResults[studentId] = 0
+            self.studentsNoSolvedTasks[studentId] = self.__get_new_student_task_counter()
+
+
+class BaseTeacherTask(Task):
+    def __init__(self, task):
+        super().__init__(deepcopy(task.taskDifficulties), task.id)
+        self.noTries=0
+        self.noSuccesses=1
+
+    def update_task_estimation(self, result):
+        self.noTries+=1
+        self.noSuccesses+=result.mark
+        if self.noTries>=100:
+            for skillNo in self.taskDifficulties.keys():
+                self.taskDifficulties[skillNo]=self.noTries/(self.noTries+self.noSuccesses)
+
+
+
