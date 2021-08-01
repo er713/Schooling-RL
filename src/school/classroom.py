@@ -194,7 +194,7 @@ class Classroom:
         if savePlot:
             makedirs(f"./data/{self.teacher}/", exist_ok=True)
             plotter.plot_learning_save(f"./data/{self.teacher}/" + self.exportFileName + 'png')
-
+            np.savetxt(f"./data{self.teacher}/{self.exportFileName}.csv")
     def _run_minimal_improvement(self, timeToExam: int, learningType: str, nEpoch: int, minImprovement: float,
                                  examTasks: List[Task], saveResults: bool = True, plotter: Plotter = None) -> None:
         """
