@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import re
 import copy
+import numpy as np
 from . import import_results, Result
 
 
@@ -229,5 +230,9 @@ class Plotter:
     
     def dump_results_to_csv(self,
                         save_path: str = None) -> None:
+        """
+        Function responsible for save results to csv file
+        :param: str save_path: Path where user want save csv file
+        """
         np.savetxt(save_path,self.results)
         
