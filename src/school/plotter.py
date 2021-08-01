@@ -114,3 +114,8 @@ class Plotter:
 
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
+    
+    def dump_results_to_csv(self,
+                        save_path: str = None) -> None:
+        np.savetxt(save_path,self.results)
+        
