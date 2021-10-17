@@ -33,3 +33,10 @@ class Student:
         :param result: { mark: float, duration: float, task: Task }
         """
         raise NotImplementedError('_update_proficiency was not implemented')
+
+    def __str__(self):
+        return "studentID: " + str(self.id) + \
+               "\ndesireToLearn: " + str(self._desireToLearn) + \
+               "\nprofficiencies: "+ str(self._proficiency)
+
+
