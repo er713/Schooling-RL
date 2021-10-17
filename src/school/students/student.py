@@ -20,6 +20,7 @@ class Student:
         """
         raise NotImplementedError('solv_task was not implemented')
 
+    @abstractmethod
     def want_task(self) -> bool:
         """
         Function which return student choice to solve or not to solve a task,
