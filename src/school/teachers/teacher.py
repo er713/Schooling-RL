@@ -4,8 +4,8 @@ from src.school.task import Task
 
 class Teacher:
     def __init__(self) -> None:
+        # raise NotImplementedError('Teacher constructor was not implemented')
         pass
-       # raise NotImplementedError('Teacher constructor was not implemented')
 
     @abstractmethod
     def choose_task(self, student) -> Task:

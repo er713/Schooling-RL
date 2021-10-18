@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+from .. import Task, Result
+
 
 class Student:
     def __init__(self, id: int = 0, proficiency: list[float] = [], desireToLearn: float = 1) -> None:
@@ -13,10 +15,11 @@ class Student:
         self._desireToLearn = desireToLearn
 
     @abstractmethod
-    def solve_task(self, task: object) -> None:
+    def solve_task(self, task: Task, isExam: bool) -> Result:
         """
-        Function resposible for solve task which triggers update proficiency
+        Function responsible for solve task which triggers update proficiency
         :param task: The Task object
+        :param isExam: Does task is part of the exam.
         """
         raise NotImplementedError('solv_task was not implemented')
 
@@ -28,9 +31,9 @@ class Student:
         raise NotImplementedError('want_task was not implemented')
 
     @abstractmethod
-    def _update_proficiency(self, result: object) -> None:
+    def _update_proficiency(self, result: Result) -> None:
         """
-        Function resposible for update student proficiency of given skill
+        Function responsible for update student proficiency of given skill
         :param result: { mark: float, duration: float, task: Task }
         """
         raise NotImplementedError('_update_proficiency was not implemented')

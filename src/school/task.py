@@ -1,8 +1,50 @@
+from __future__ import annotations
+from typing import Dict, Tuple
+import numpy as np
+
+
 class Task:
-    def __init__(self, id : int, taskDifficulties: dict) -> None:
+    def __init__(self, taskDifficulties: Dict[int, float]) -> None:
         """
-        :param difficulty: The difficulty of the task
-        :param skill: The label of skill
+        :param taskDifficulties: The dictionary of difficulty for skill
         """
-        self.id = id
+        self.id = next(Task._id_generator())
         self.taskDifficulties = taskDifficulties
+
+    @classmethod
+    def generate_random_task(cls, nSkills: int, minSkill: int = 1, maxSkill: int = None,
+                             difficultiesRange: Tuple[float, float] = (-3, 3)) -> Task:
+        """
+        Create random Task with specified parameters.
+        :param nSkills: Number of skills.
+        :param minSkill: Minimal number of skill which task has to have. Greater than 0.
+        :param maxSkill: Maximal number of skill which task has to have. Smaller or equal than nSkills.
+        If None, equals nSkills.
+        :param difficultiesRange: Tuple of minimum and maximum difficulties that task can have.
+        :return: Random Task
+        """
+        if maxSkill is None:
+            maxSkill = nSkills
+        chooseNSkills = \
+            np.random.choice(np.arange(nSkills), replace=False,
+                             # number of skills in one task depends on exponential distribution with lambda = 0.8 sacled and rounded to [minSkill, maxSkill]
+                             size=np.floor(np.random.exponential(10 / 8, 1) / 4 * (maxSkill - minSkill))[0] + minSkill)
+
+        meanDifficultiesRange = (difficultiesRange[0] + difficultiesRange[1]) / 2
+        difficulties = np.clip(np.random.standard_normal(chooseNSkills.shape[0]) / 3, -1, 1) * (
+                    difficultiesRange[1] - meanDifficultiesRange) + meanDifficultiesRange
+
+        combined = dict()
+        for skill, diff in zip(chooseNSkills, difficulties):
+            combined[skill] = diff
+        return cls(combined)
+
+    @staticmethod
+    def _id_generator():
+        """
+        ID generator, ensure distinct IDs.
+        """
+        _id = 0
+        while True:
+            yield _id
+            _id += 1
