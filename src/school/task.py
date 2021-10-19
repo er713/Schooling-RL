@@ -27,7 +27,8 @@ class Task:
             maxSkill = nSkills
         chooseNSkills = \
             np.random.choice(np.arange(nSkills), replace=False,
-                             # number of skills in one task depends on exponential distribution with lambda = 0.8 sacled and rounded to [minSkill, maxSkill]
+                             # number of skills in one task depends on exponential distribution
+                             # with lambda = 0.8 scaled and rounded to [minSkill, maxSkill]
                              size=np.floor(np.random.exponential(10 / 8, 1) / 4 * (maxSkill - minSkill))[0] + minSkill)
 
         difficulties = np.random.random(chooseNSkills.shape[0]) * (difficultiesRange[1] - difficultiesRange[0]) + \

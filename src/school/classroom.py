@@ -9,29 +9,43 @@ from .teachers import Teacher
 
 class Classroom:
     def __init__(self, nSkills: int, teacherModel: Type[Teacher], studentModel: Type[Student],
-                 difficultyRange: List[Optional[Dict[int, float]]] = None, nStudents: int = 1) -> None:
+                 tasksSkillsDifficulties: List[Optional[Dict[int, float]]] = None, nStudents: int = 1,
+                 minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3)) -> None:
         """
         :param nSkills: The number of skills
         :param teacherModel: Class implementing Teacher interface.
         :param studentModel: Class implementing Student interface.
-        :param difficultyRange: List of dictionaries of sill and difficulties. If None, generate Tasks (uniformly from
-        -3 to 3 for each skill). If list of None, generate number of random Task equal to length of list.
+        :param tasksSkillsDifficulties: List of dictionaries of sill and difficulties. If None, generate Tasks
+        (uniformly from -3 to 3 for each skill). If list of None, generate number of random Task equal to length of list.
         :param nStudents: The number of students in classroom
+        :param minSkill: (Task generating) Minimal number of skill which task has to have. Greater than 0.
+        :param maxSkill: (Task generating) Maximal number of skill which task has to have. Smaller or equal than nSkills.
+        If None, equals nSkills.
+        :param difficultiesRange: (Task generating) Tuple of minimum and maximum difficulties that task can have.
         """
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
-        if difficultyRange is None:
-            difficultyRange = []
+
+        if tasksSkillsDifficulties is None:  # Default task, for each skill, difficulties in [-3, 3]
+            tasksSkillsDifficulties = []
             for skill in range(nSkills):
                 for difficulty in range(-3, 4):
-                    difficultyRange.append({skill: difficulty})
+                    tasksSkillsDifficulties.append({skill: difficulty})
 
+        # Task generating parameters
+        self._minSkill = minSkill
+        self._maxSkill = maxSkill
+        self._difficultiesRange = difficultiesRange
+
+        # Initializing params
         self.nSkills = nSkills
-        self._studentModel = studentModel
         self.teacher = teacherModel()
-        self.tasks = self._generate_tasks(difficultyRange)
+
+        self.tasks = self._generate_tasks(tasksSkillsDifficulties)
+        self._studentModel = studentModel
         self.students = self._generate_students(nStudents)
-        self._learning_types = {
+
+        self._learning_types = {  # only for choosing method in learning_loop
             'single-student': self._learning_loop_single_student,
             'all-one-by-one': self._learning_loop_single_student,
             'all-random': self._learning_loop_all_student_parallel
@@ -41,7 +55,8 @@ class Classroom:
         """
         Function responsible for learning process
         :param timeToExam: Number of Tasks proposed to each Student.
-        :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'.
+        :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. Running specified
+        _learning_loop method, respectively: _single_student, _all_student, _all_student_parallel.
         :return: List of student who were taught.
         """
         assert learningType in self._learning_types
@@ -136,8 +151,9 @@ class Classroom:
         """
         Function responsible for running learning until there is no improve.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
-        :param nEpoch:
-        :param minImprovement: Tuple of number of epoch in which improvement has to appear and how great it has to be to continue learning.
+        :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
+        :param nEpoch: Number of epochs when improvement has to appear to continue learning.
+        :param minImprovement: Minimal difference to approve change as improvement.
         """
         lastResult = 0
         epoch = -1
@@ -161,8 +177,9 @@ class Classroom:
         """
         Function responsible for running learning until score is above threshold for specified number of epoch.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
-        :param nEpoch: 
-        :param threshold: Tuple of number of epoch in which threshold has to be exceeded to stop learning.
+        :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
+        :param nEpoch: Number of epochs for which threshold has to be exceeded to stop learning.
+        :param threshold: Threshold.
         """
         epoch = -1
         epochWithThreshold = 0
@@ -179,16 +196,18 @@ class Classroom:
             if epochWithThreshold >= nEpoch:
                 break
 
-    def _generate_tasks(self, difficultyRange: List[Optional[Dict[int, float]]]) -> List[Task]:
+    def _generate_tasks(self, tasksSkillsDifficulties: List[Optional[Dict[int, float]]]) -> List[Task]:
         """
         Function responsible for generating tasks for Classroom
-        :param difficultyRange: List of dictionaries with skill difficulties. If dictionary is None, generating
+        :param tasksSkillsDifficulties: List of dictionaries with skill difficulties. If dictionary is None, generating
         random Task.
+        :return: List of generated Tasks.
         """
         tasks = []
-        for difficulties in difficultyRange:
+        for difficulties in tasksSkillsDifficulties:
             if difficulties is None:
-                tasks.append(Task.generate_random_task(self.nSkills))
+                tasks.append(
+                    Task.generate_random_task(self.nSkills, self._minSkill, self._maxSkill, self._difficultiesRange))
             else:
                 tasks.append(Task(difficulties))
         return tasks
@@ -197,6 +216,7 @@ class Classroom:
         """
         Function responsible for generating students for Classroom
         :param nStudents: number of students in Classroom
+        :return: List of generated Students.
         """
         students = []
         for id_ in range(nStudents):
@@ -207,3 +227,4 @@ class Classroom:
 
 if __name__ == "__main__":
     c = Classroom(7, Teacher, Student)
+    print(c)
