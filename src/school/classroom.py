@@ -2,13 +2,9 @@ import random
 from typing import Type, Tuple, Dict, List, Optional
 import numpy as np
 
-# from . import Result
-# from .task import Task
-# from .students import Student
-# from .teachers import Teacher
-from src.school import Task, Result
-from src.school.students import Student
-from src.school.teachers import Teacher
+from . import Task, Result
+from .students import Student
+from .teachers import Teacher
 
 
 class Classroom:
@@ -24,6 +20,11 @@ class Classroom:
         """
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
+        if difficultyRange is None:
+            difficultyRange = []
+            for skill in range(nSkills):
+                for difficulty in range(-3, 4):
+                    difficultyRange.append({skill: difficulty})
 
         self.nSkills = nSkills
         self._studentModel = studentModel

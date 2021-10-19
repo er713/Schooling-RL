@@ -1,8 +1,7 @@
 """
 School module __init__ file
 """
-from classroom import *
-from result import *
-from task import *
-# from students import *
-# from teachers import *
+__all__ = ["Classroom", "Result", "Task", "students", "teachers"]
+from .result import Result
+from .task import Task
+from .classroom import Classroom

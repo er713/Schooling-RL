@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from src.school.task import Task
+from .. import Task
 
 
 class Teacher:
