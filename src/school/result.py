@@ -19,8 +19,8 @@ class Result:
     @staticmethod
     def get_mean_result(results: List[Result]) -> (float, float):
         """
-        Calculate mean score
-        :param results: List of results
+        Calculate mean score and time.
+        :param results: List of results.
         :return: (mean score, mean time)
         """
         return mean([result.mark for result in results]), mean([result.duration for result in results])

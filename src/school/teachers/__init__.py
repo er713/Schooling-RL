@@ -1,1 +1,2 @@
-from teacher import *
+__all__ = ["Teacher"]
+from .teacher import Teacher

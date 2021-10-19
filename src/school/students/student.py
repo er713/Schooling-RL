@@ -15,7 +15,7 @@ class Student:
         self._desireToLearn = desireToLearn
 
     @abstractmethod
-    def solve_task(self, task: Task, isExam: bool) -> Result:
+    def solve_task(self, task: Task, isExam: bool = False) -> Result:
         """
         Function responsible for solve task which triggers update proficiency
         :param task: The Task object
