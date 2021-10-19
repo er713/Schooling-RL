@@ -30,9 +30,8 @@ class Task:
                              # number of skills in one task depends on exponential distribution with lambda = 0.8 sacled and rounded to [minSkill, maxSkill]
                              size=np.floor(np.random.exponential(10 / 8, 1) / 4 * (maxSkill - minSkill))[0] + minSkill)
 
-        meanDifficultiesRange = (difficultiesRange[0] + difficultiesRange[1]) / 2
-        difficulties = np.clip(np.random.standard_normal(chooseNSkills.shape[0]) / 3, -1, 1) * (
-                    difficultiesRange[1] - meanDifficultiesRange) + meanDifficultiesRange
+        difficulties = np.random.random(chooseNSkills.shape[0]) * (difficultiesRange[1] - difficultiesRange[0]) + \
+                       difficultiesRange[0]
 
         combined = dict()
         for skill, diff in zip(chooseNSkills, difficulties):
