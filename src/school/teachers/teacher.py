@@ -3,9 +3,8 @@ from .. import Task
 
 
 class Teacher:
-    def __init__(self) -> None:
-        # raise NotImplementedError('Teacher constructor was not implemented')
-        pass
+    def __init__(self, tasks: list[Task] = []) -> None:
+        self.tasks = tasks
 
     @abstractmethod
     def choose_task(self, student) -> Task:
