@@ -21,20 +21,23 @@ class RashStudent(Student):
         self._proficiency = proficiency
         self._desireToLearn = desireToLearn
 
-    def solve_task(self, task: Task) -> Result:
+    def solve_task(self, task: Task, isExam: bool = False) -> Result:
         """
         Function resposible for solve task which triggers update proficiency
         Used formula for probability of correct answer p_corr=1/{1+e^[-(proficiency-difficulty)]}
         Final mark is mean of all probabilities for particular skills
+        :param isExam: Is it exam task
         :param task: The Task object
         """
         probasToSolve = np.zeros(len(self._proficiency))
         for skill, difficulty in task.taskDifficulties.items():
             logit_p = self._proficiency[skill] - difficulty
             probasToSolve[skill] = expit(logit_p)
-        mark = probasToSolve.mean(where=probasToSolve != 0)
-        taskResult = Result(mark, -1, task, self.id)
-        self._update_proficiency(taskResult)
+        probaToSolve = probasToSolve.mean(where=probasToSolve != 0)
+        mark = 1 if random.random() < probaToSolve else 0
+        taskResult = Result(mark, -1, task, self.id, isExam=isExam)
+        if not isExam:
+            self._update_proficiency(taskResult, probaToSolve)
         return taskResult
 
     def want_task(self) -> bool:
@@ -43,20 +46,20 @@ class RashStudent(Student):
         """
         return True if random.random() < self._desireToLearn else False
 
-    def _update_proficiency(self, result: Result) -> None:
+    def _update_proficiency(self, result: Result, probaToSolve: float = -1) -> None:
         """
         Function responsible for update student proficiency of given skill
         :param result: Result
         """
         diffs = np.zeros(len(self._proficiency))
-        taskMask = np.zeros(len(self._proficiency), dtype=bool)
+        taskSkillsMask = np.zeros(len(self._proficiency), dtype=bool)
         for skill, difficulty in result.task.taskDifficulties.items():
             diffs[skill] = difficulty - self._proficiency[skill]
-            taskMask[skill] = True
+            taskSkillsMask[skill] = True
         # baseChange will be different from 0 only when task influence certain skill
         baseChange = np.zeros(len(self._proficiency))
-        np.maximum(diffs, self._baseChangeParam, out=baseChange, where=taskMask)
-        correctness_mod = 2 / 3 if random.random() < result.mark else 3 / 2
-        changeStrength = result.mark ** correctness_mod
+        np.maximum(diffs, self._baseChangeParam, out=baseChange, where=taskSkillsMask)
+        correctness_mod = 3 / 2 if result.mark == 1 else 2 / 3
+        changeStrength = probaToSolve ** correctness_mod
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength

@@ -3,9 +3,9 @@ from .. import Task
 
 
 class Teacher:
-    def __init__(self, tasks: list[Task] = []) -> None:
+    def __init__(self, tasks: list[Task], nSkills: int) -> None:
         self.tasks = tasks
-
+        self.nSkills = nSkills
     @abstractmethod
     def choose_task(self, student) -> Task:
         """
