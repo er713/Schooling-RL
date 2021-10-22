@@ -39,10 +39,11 @@ class Classroom:
 
         # Initializing params
         self.nSkills = nSkills
-        
-        self.tasks = self._generate_tasks(tasksSkillsDifficulties)
+        self.nStudents = nStudents
         self._studentModel = studentModel
-        self.students = self._generate_students(nStudents)
+
+        self.students = None  # Generated during learning_process method
+        self.tasks = self._generate_tasks(tasksSkillsDifficulties)
 
         self.teacher = teacherModel(self.nSkills, self.tasks)
 
@@ -52,7 +53,7 @@ class Classroom:
             'all-random': self._learning_loop_all_student_parallel
         }
 
-    def learning_process(self, timeToExam: int, learningType: str = 'all-one-by-one') -> List[Student]:
+    def learning_process(self, timeToExam: int, learningType: str = 'all-one-by-one') -> None:
         """
         Function responsible for learning process
         :param timeToExam: Number of Tasks proposed to each Student.
@@ -61,9 +62,10 @@ class Classroom:
         :return: List of student who were taught.
         """
         assert learningType in self._learning_types
-        return self._learning_types[learningType](timeToExam)
+        self.students = self._generate_students(self.nStudents)
+        self._learning_types[learningType](timeToExam)
 
-    def _learning_loop_single_student(self, timeToExam: int) -> List[Student]:
+    def _learning_loop_single_student(self, timeToExam: int) -> None:
         """
         Learning loop for teaching one random Student.
         """
@@ -73,9 +75,8 @@ class Classroom:
                 self.teacher.receive_result(
                     student.solve_task(self.teacher.choose_task(student))
                 )
-        return [student]
 
-    def _learning_loop_all_student(self, timeToExam: int) -> List[Student]:
+    def _learning_loop_all_student(self, timeToExam: int) -> None:
         """
         Learning loop for teaching all students, one by one.
         """
@@ -84,9 +85,8 @@ class Classroom:
                 if student.want_task():
                     self.teacher.receive_result(
                         student.solve_task(self.teacher.choose_task(student), isExam=False))
-        return self.students
 
-    def _learning_loop_all_student_parallel(self, timeToExam: int) -> List[Student]:
+    def _learning_loop_all_student_parallel(self, timeToExam: int) -> None:
         """
         Learning loop for teaching all students, random order.
         """
@@ -96,16 +96,14 @@ class Classroom:
                 if student.want_task():
                     self.teacher.receive_result(
                         student.solve_task(self.teacher.choose_task(student)))
-        return self.students
 
-    def make_exam(self, examTasks: List[Task], students: List[Student]) -> (float, float):
+    def make_exam(self, examTasks: List[Task]) -> (float, float):
         """
         Function responsible for evaluation process
         :param examTasks: List of Tasks.
-        :param students: List of Student who taking the exam.
         """
         results = []
-        for student in students:
+        for student in self.students:
             for task in examTasks:
                 res = student.solve_task(task, True)
                 self.teacher.receive_result(res)
@@ -133,7 +131,7 @@ class Classroom:
         if examTasksDifficulties is None:
             for skill in range(self.nSkills):
                 for _ in range(2):
-                    examTasks.append({skill: 2})
+                    examTasks.append(Task({skill: 2}))
         else:
             examTasks = self._generate_tasks(examTasksDifficulties)
 
@@ -143,8 +141,8 @@ class Classroom:
             self._run_minimal_threshold(timeToExam, learningType, minimalThreshold[0], minimalThreshold[1], examTasks)
         else:
             for epoch in range(numberOfIteration):
-                students = self.learning_process(timeToExam, learningType)
-                result, _ = self.make_exam(examTasks, students)
+                self.learning_process(timeToExam, learningType)
+                result, _ = self.make_exam(examTasks)
                 print(f"Epoch: {epoch}, mean score on exam: {result}")
 
     def _run_minimal_improvement(self, timeToExam: int, learningType: str, nEpoch: int, minImprovement: float,
@@ -162,8 +160,8 @@ class Classroom:
 
         while True:
             epoch += 1
-            students = self.learning_process(timeToExam, learningType)
-            result, _ = self.make_exam(examTasks, students)
+            self.learning_process(timeToExam, learningType)
+            result, _ = self.make_exam(examTasks)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result - lastResult < minImprovement:
                 epochWithoutImprovement += 1
@@ -187,8 +185,8 @@ class Classroom:
 
         while True:
             epoch += 1
-            students = self.learning_process(timeToExam, learningType)
-            result, _ = self.make_exam(examTasks, students)
+            self.learning_process(timeToExam, learningType)
+            result, _ = self.make_exam(examTasks)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result >= threshold:
                 epochWithThreshold += 1
