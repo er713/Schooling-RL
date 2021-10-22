@@ -4,14 +4,19 @@ import numpy as np
 
 
 class Task:
-    def __init__(self, taskDifficulties: Dict[int, float], taskId: int=-1) -> None:
+    _id = 0  # "Static" variable for generating ID
+
+    def __init__(self, taskDifficulties: Dict[int, float], taskId: int = -1) -> None:
         """
         :param taskDifficulties: The dictionary of difficulty for skill
         """
         if taskId == -1:
-            self.id = next(Task._id_generator())
-        else:
+            self.id = Task._id
+            Task._id += 1
+        elif 0 <= taskId < Task._id:
             self.id = taskId
+        else:
+            raise Exception("When copping task, you have to specify existing task ID.")
         self.taskDifficulties = taskDifficulties
 
     @classmethod
@@ -41,16 +46,6 @@ class Task:
         for skill, diff in zip(chooseNSkills, difficulties):
             combined[skill] = diff
         return cls(combined)
-
-    @staticmethod
-    def _id_generator():
-        """
-        ID generator, ensure distinct IDs.
-        """
-        _id = 0
-        while True:
-            yield _id
-            _id += 1
 
     def __deepcopy__(self):
         return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)

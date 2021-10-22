@@ -3,9 +3,10 @@ from .. import Task
 
 
 class Teacher:
-    def __init__(self, tasks: list[Task], nSkills: int) -> None:
+    def __init__(self, nSkills: int, tasks: list[Task]) -> None:
         self.tasks = tasks
         self.nSkills = nSkills
+
     @abstractmethod
     def choose_task(self, student) -> Task:
         """
@@ -14,7 +15,7 @@ class Teacher:
         :return: return Task for student
         """
         raise NotImplementedError('choose_task was not implemented')
-    
+
     @abstractmethod
     def receive_result(self, result) -> None:
         raise NotImplementedError('receive_result was not implemented')

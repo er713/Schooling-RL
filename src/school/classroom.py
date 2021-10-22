@@ -44,8 +44,7 @@ class Classroom:
         self._studentModel = studentModel
         self.students = self._generate_students(nStudents)
 
-        
-        self.teacher = teacherModel(self.tasks, self.nSkills)
+        self.teacher = teacherModel(self.nSkills, self.tasks)
 
         self._learning_types = {  # only for choosing method in learning_loop
             'single-student': self._learning_loop_single_student,

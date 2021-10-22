@@ -1,2 +1,3 @@
-__all__ = ["Student"]
+__all__ = ["Student", "RashStudent"]
 from .student import Student
+from .rasch_student import RashStudent
