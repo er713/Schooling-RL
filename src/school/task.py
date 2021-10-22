@@ -4,11 +4,14 @@ import numpy as np
 
 
 class Task:
-    def __init__(self, taskDifficulties: Dict[int, float]) -> None:
+    def __init__(self, taskDifficulties: Dict[int, float], taskId: int=-1) -> None:
         """
         :param taskDifficulties: The dictionary of difficulty for skill
         """
-        self.id = next(Task._id_generator())
+        if taskId == -1:
+            self.id = next(Task._id_generator())
+        else:
+            self.id = taskId
         self.taskDifficulties = taskDifficulties
 
     @classmethod
@@ -48,3 +51,6 @@ class Task:
         while True:
             yield _id
             _id += 1
+
+    def __deepcopy__(self):
+        return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)
