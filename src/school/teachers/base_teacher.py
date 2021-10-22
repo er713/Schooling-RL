@@ -1,13 +1,12 @@
-from abc import abstractmethod
 from .. import Task
-from teacher import Teacher
+from . import Teacher
 from copy import deepcopy
 import numpy as np
 
 
 class BaseTeacher(Teacher):
 
-    def __init__(self, tasks: list[Task], nSkills: int, estimateDifficulty: bool) -> None:
+    def __init__(self, nSkills: int, tasks: list[Task], estimateDifficulty: bool = True) -> None:
         copiedTasks = [deepcopy(task) for task in tasks]
         super().__init__(tasks=copiedTasks, nSkills=nSkills)
         self.studentsProficiencies = {}
