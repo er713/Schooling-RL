@@ -1,4 +1,5 @@
 import random
+import warnings
 from typing import Type, Tuple, Dict, List, Optional
 import numpy as np
 
@@ -8,6 +9,10 @@ from .teachers import Teacher
 
 
 class Classroom:
+    _SINGLE_STUDENT = 'single-student'
+    _ALL_ONE_BY_ONE = 'all-one-by-one'
+    _ALL_RANDOM = 'all-random'
+
     def __init__(self, nSkills: int, teacherModel: Type[Teacher], studentModel: Type[Student],
                  tasksSkillsDifficulties: List[Optional[Dict[int, float]]] = None, nStudents: int = 1,
                  minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3)) -> None:
@@ -48,9 +53,9 @@ class Classroom:
         self.teacher = teacherModel(self.nSkills, self.tasks)
 
         self._learning_types = {  # only for choosing method in learning_loop
-            'single-student': self._learning_loop_single_student,
-            'all-one-by-one': self._learning_loop_single_student,
-            'all-random': self._learning_loop_all_student_parallel
+            self._SINGLE_STUDENT: self._learning_loop_single_student,
+            self._ALL_ONE_BY_ONE: self._learning_loop_single_student,
+            self._ALL_RANDOM: self._learning_loop_all_student_parallel
         }
 
     def learning_process(self, timeToExam: int, learningType: str = 'all-one-by-one') -> None:
@@ -127,6 +132,10 @@ class Classroom:
         :param examTasksDifficulties: List of dictionary of skill and difficulties. If None, generate 2 Task
         with difficulty 2 for each skill.
         """
+        if learningType == self._SINGLE_STUDENT and self.nStudents != 1:
+            warnings.warn('Probably nStudents should be 1, because only one student will be taught before exam',
+                          UserWarning)
+
         examTasks = []  # Generating tasks for exam
         if examTasksDifficulties is None:
             for skill in range(self.nSkills):
