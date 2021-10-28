@@ -14,3 +14,6 @@ class RandomTeacher(Teacher):
 
     def receive_result(self, result) -> None:
         pass
+
+    def __str__(self):
+        return 'RandomTeacher'

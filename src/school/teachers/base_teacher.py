@@ -56,3 +56,5 @@ class BaseTeacher(Teacher):
             if self.estimateDifficulty:
                 estimatedTask.taskDifficulties[skillNo] -= baseDiffScaler*correctionScaler[skillNo]
 
+    def __str__(self):
+        return 'BaseTeacher'

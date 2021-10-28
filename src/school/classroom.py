@@ -7,7 +7,7 @@ from .students import Student
 from .teachers import Teacher
 
 
-class Classroom:
+class Classroom:  # TODO: store Results here
     def __init__(self, nSkills: int, teacherModel: Type[Teacher], studentModel: Type[Student],
                  tasksSkillsDifficulties: List[Optional[Dict[int, float]]] = None, nStudents: int = 1,
                  minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3)) -> None:
@@ -222,6 +222,22 @@ class Classroom:
             students.append(
                 self._studentModel(id_, list(np.clip(np.random.normal(scale=1 / 3, size=self.nSkills), -1, 1))))
         return students
+
+    def export_results(self, path: str = None) -> None:  # TODO
+        """
+        Function for exporting results
+        :param path: If None, store results in data/str(teacher)/<parameters>_<date>.csv.
+        Otherwise, store in path (relative from base path).
+        """
+        pass
+
+    def import_results(self, path: str = None) -> None:
+        """
+        Function for importing results
+        :param path: If None, read results from data/str(teacher)/<parameters>_<date>.csv.
+        Otherwise, read from path (relative from base path).
+        """
+        pass
 
 
 if __name__ == "__main__":
