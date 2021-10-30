@@ -54,7 +54,7 @@ class Classroom:
 
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
-            self._ALL_ONE_BY_ONE: self._learning_loop_single_student,
+            self._ALL_ONE_BY_ONE: self._learning_loop_all_student,
             self._ALL_RANDOM: self._learning_loop_all_student_parallel
         }
 
