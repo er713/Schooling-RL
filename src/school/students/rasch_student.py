@@ -63,3 +63,4 @@ class RashStudent(Student):
         changeStrength = probaToSolve ** correctness_mod
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength
+            self._proficiency[idx] = max(min(self._proficiency[idx], 3), -3)
