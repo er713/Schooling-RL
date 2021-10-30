@@ -63,3 +63,7 @@ class RashStudent(Student):
         changeStrength = probaToSolve ** correctness_mod
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength
+
+    @staticmethod
+    def get_name():
+        return 'RashStudent'

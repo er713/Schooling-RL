@@ -1,6 +1,10 @@
 import random
 from typing import Type, Tuple, Dict, List, Optional
 import numpy as np
+import csv
+from os import makedirs
+from os.path import isfile
+from datetime import datetime
 
 from . import Task, Result
 from .students import Student
@@ -10,7 +14,8 @@ from .teachers import Teacher
 class Classroom:  # TODO: store Results here
     def __init__(self, nSkills: int, teacherModel: Type[Teacher], studentModel: Type[Student],
                  tasksSkillsDifficulties: List[Optional[Dict[int, float]]] = None, nStudents: int = 1,
-                 minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3)) -> None:
+                 minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3),
+                 saveResultsNumber: int = 1e5, now: datetime = None) -> None:
         """
         :param nSkills: The number of skills
         :param teacherModel: Class implementing Teacher interface.
@@ -22,6 +27,8 @@ class Classroom:  # TODO: store Results here
         :param maxSkill: (Task generating) Maximal number of skill which task has to have. Smaller or equal than nSkills.
         If None, equals nSkills.
         :param difficultiesRange: (Task generating) Tuple of minimum and maximum difficulties that task can have.
+        :param saveResultsNumber: Number of Results for which cache is dumped to file (methods export_results).
+        :param now: Datetime for creating name of file with exported Results.
         """
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
@@ -33,23 +40,30 @@ class Classroom:  # TODO: store Results here
                     tasksSkillsDifficulties.append({skill: difficulty})
 
         # Task generating parameters
-        self._minSkill = minSkill
-        self._maxSkill = maxSkill
-        self._difficultiesRange = difficultiesRange
+        self._minSkill: int = minSkill
+        self._maxSkill: int = maxSkill
+        self._difficultiesRange: Tuple[float, float] = difficultiesRange
 
         # Initializing params
-        self.nSkills = nSkills
-        self.nStudents = nStudents
-        self._studentModel = studentModel
+        self.nSkills: int = nSkills
+        self.nStudents: int = nStudents
+        self._studentModel: Type[Student] = studentModel
 
-        self.students = None  # Generated during learning_process method
-        self.tasks = self._generate_tasks(tasksSkillsDifficulties)
+        self.students: List[Student] = []  # Generated during learning_process method
+        self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher = teacherModel(self.nSkills, self.tasks)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks)
+
+        self.results: List[Result] = []
+        self.saveTaskNumber: int = saveResultsNumber
+        if now is None:
+            now = datetime.now()
+        self.exportFileName: str = f"{self._studentModel.get_name()}__{self.nStudents}_{self.nSkills}__{now.year}-" + \
+                                   f"{now.month}-{now.day}_{now.time().hour}-{now.time().minute}.csv"
 
         self._learning_types = {  # only for choosing method in learning_loop
             'single-student': self._learning_loop_single_student,
-            'all-one-by-one': self._learning_loop_single_student,
+            'all-one-by-one': self._learning_loop_all_student,
             'all-random': self._learning_loop_all_student_parallel
         }
 
@@ -71,10 +85,7 @@ class Classroom:  # TODO: store Results here
         """
         student = self.students[np.random.randint(0, len(self.students), 1)[0]]
         for time in range(timeToExam):
-            if student.want_task():
-                self.teacher.receive_result(
-                    student.solve_task(self.teacher.choose_task(student))
-                )
+            self._learn_student(student)
 
     def _learning_loop_all_student(self, timeToExam: int) -> None:
         """
@@ -82,9 +93,7 @@ class Classroom:  # TODO: store Results here
         """
         for student in self.students:
             for time in range(timeToExam):
-                if student.want_task():
-                    self.teacher.receive_result(
-                        student.solve_task(self.teacher.choose_task(student), isExam=False))
+                self._learn_student(student)
 
     def _learning_loop_all_student_parallel(self, timeToExam: int) -> None:
         """
@@ -93,9 +102,18 @@ class Classroom:  # TODO: store Results here
         for time in range(timeToExam):
             random.shuffle(self.students)
             for student in self.students:
-                if student.want_task():
-                    self.teacher.receive_result(
-                        student.solve_task(self.teacher.choose_task(student)))
+                self._learn_student(student)
+
+    def _learn_student(self, student: Student, isExam: bool = False) -> None:
+        """
+        Assistant function for giving one Task to specified Student.
+        :param student: Student to learn.
+        :param isExam: If Task is part of exam.
+        """
+        if student.want_task():
+            result = student.solve_task(self.teacher.choose_task(student), isExam=isExam)
+            self.results.append(result)
+            self.teacher.receive_result(result)
 
     def make_exam(self, examTasks: List[Task]) -> (float, float):
         """
@@ -106,6 +124,7 @@ class Classroom:  # TODO: store Results here
         for student in self.students:
             for task in examTasks:
                 res = student.solve_task(task, True)
+                self.results.append(res)
                 self.teacher.receive_result(res)
                 results.append(res)
 
@@ -113,7 +132,7 @@ class Classroom:  # TODO: store Results here
 
     def run(self, timeToExam: int, learningType: str = 'all-one-by-one', minimalImprove: Tuple[int, float] = None,
             minimalThreshold: Tuple[int, float] = None, numberOfIteration: int = 1,
-            examTasksDifficulties: List[Optional[Dict[int, float]]] = None) -> None:
+            examTasksDifficulties: List[Optional[Dict[int, float]]] = None, saveResults: bool = True) -> None:
         """
         Function responsible for running learning and evaluation process
         :param timeToExam: Number of Tasks proposed to each Student.
@@ -126,6 +145,7 @@ class Classroom:  # TODO: store Results here
         Works only if minimalImprove and minimalThreshold are None.
         :param examTasksDifficulties: List of dictionary of skill and difficulties. If None, generate 2 Task
         with difficulty 2 for each skill.
+        :param saveResults: If True, dump all Results to file.
         """
         examTasks = []  # Generating tasks for exam
         if examTasksDifficulties is None:
@@ -136,23 +156,26 @@ class Classroom:  # TODO: store Results here
             examTasks = self._generate_tasks(examTasksDifficulties)
 
         if minimalImprove is not None:
-            self._run_minimal_improvement(timeToExam, learningType, minimalImprove[0], minimalImprove[1], examTasks)
+            self._run_minimal_improvement(timeToExam, learningType, minimalImprove[0], minimalImprove[1], examTasks,
+                                          saveResults=saveResults)
         elif minimalThreshold is not None:
-            self._run_minimal_threshold(timeToExam, learningType, minimalThreshold[0], minimalThreshold[1], examTasks)
+            self._run_minimal_threshold(timeToExam, learningType, minimalThreshold[0], minimalThreshold[1], examTasks,
+                                        saveResults=saveResults)
         else:
             for epoch in range(numberOfIteration):
-                self.learning_process(timeToExam, learningType)
-                result, _ = self.make_exam(examTasks)
+                result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
                 print(f"Epoch: {epoch}, mean score on exam: {result}")
 
     def _run_minimal_improvement(self, timeToExam: int, learningType: str, nEpoch: int, minImprovement: float,
-                                 examTasks: List[Task]) -> None:
+                                 examTasks: List[Task], saveResults: bool = True) -> None:
         """
         Function responsible for running learning until there is no improve.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
         :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
         :param nEpoch: Number of epochs when improvement has to appear to continue learning.
         :param minImprovement: Minimal difference to approve change as improvement.
+        :param examTasks: List of Task on exam.
+        :param saveResults: If True, dump all Results to file.
         """
         lastResult = 0
         epoch = -1
@@ -160,8 +183,7 @@ class Classroom:  # TODO: store Results here
 
         while True:
             epoch += 1
-            self.learning_process(timeToExam, learningType)
-            result, _ = self.make_exam(examTasks)
+            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result - lastResult < minImprovement:
                 epochWithoutImprovement += 1
@@ -172,21 +194,22 @@ class Classroom:  # TODO: store Results here
                 break
 
     def _run_minimal_threshold(self, timeToExam: int, learningType: str, nEpoch: int, threshold: float,
-                               examTasks: List[Task]) -> None:
+                               examTasks: List[Task], saveResults: bool = True) -> None:
         """
         Function responsible for running learning until score is above threshold for specified number of epoch.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
         :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
         :param nEpoch: Number of epochs for which threshold has to be exceeded to stop learning.
         :param threshold: Threshold.
+        :param examTasks: List of Task on exam.
+        :param saveResults: If True, dump all Results to file.
         """
         epoch = -1
         epochWithThreshold = 0
 
         while True:
             epoch += 1
-            self.learning_process(timeToExam, learningType)
-            result, _ = self.make_exam(examTasks)
+            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result >= threshold:
                 epochWithThreshold += 1
@@ -194,6 +217,22 @@ class Classroom:  # TODO: store Results here
                 epochWithThreshold = 0
             if epochWithThreshold >= nEpoch:
                 break
+
+    def _run_single_learning(self, timeToExam: int, learningType: str, examTasks: List[Task],
+                             saveResults: bool = True) -> (float, float):
+        """
+        Assistant function for running one learning process.
+        :param timeToExam: Frequency of evaluation, equal to learning_loop.
+        :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
+        :param examTasks: List of Task on exam.
+        :param saveResults: If True, dump all Results to file.
+        :return: (mean mark on exam, mean duration on exam)
+        """
+        self.learning_process(timeToExam, learningType)
+        mark, duration = self.make_exam(examTasks)
+        if saveResults:
+            self.export_results(forceDump=True)  # TODO: think about doing this on other thread due to longer disk I/O
+        return mark, duration
 
     def _generate_tasks(self, tasksSkillsDifficulties: List[Optional[Dict[int, float]]]) -> List[Task]:
         """
@@ -223,21 +262,59 @@ class Classroom:  # TODO: store Results here
                 self._studentModel(id_, list(np.clip(np.random.normal(scale=1 / 3, size=self.nSkills), -1, 1))))
         return students
 
-    def export_results(self, path: str = None) -> None:  # TODO
+    def export_results(self, path: str = None, forceDump: bool = False) -> None:
         """
-        Function for exporting results
+        Function for exporting results only if cache exceeded specified size.
         :param path: If None, store results in data/str(teacher)/<parameters>_<date>.csv.
         Otherwise, store in path (relative from base path).
+        :param forceDump: If True, omit condition check - always dump Results.
         """
-        pass
+        if len(self.results) == 0:
+            return
 
-    def import_results(self, path: str = None) -> None:
+        if forceDump or len(self.results) >= self.saveTaskNumber:
+            if path is None:
+                path = f"./data/{self.teacher}/"
+            makedirs(path, exist_ok=True)  # creating directory if not exists
+
+            filedNames = list(self.results[0].__dict__.keys())
+            not_write_header = isfile(path + self.exportFileName)
+            with open(path + self.exportFileName, 'a') as file_csv:
+                writer = csv.DictWriter(file_csv, dialect='unix', fieldnames=filedNames)
+                if not not_write_header:
+                    writer.writeheader()
+                writer.writerows([res.__dict__ for res in self.results])
+            self.results = []
+
+    def import_results(self, path: str = None, fileName: str = None) -> List[Result]:
         """
         Function for importing results
         :param path: If None, read results from data/str(teacher)/<parameters>_<date>.csv.
-        Otherwise, read from path (relative from base path).
+        Otherwise, read from path (relative from base path). Has to end with '/'.
+        :param fileName: If None, set to exportFileName.
+        :return: List of imported Results
         """
-        pass
+        if path is None:
+            path = f"./data/{self.teacher}/"
+        if fileName is None:
+            fileName = self.exportFileName
+
+        results = []
+        with open(path + fileName, 'r') as file:
+            reader = csv.DictReader(file, dialect='unix', fieldnames=None)
+            for row in reader:
+                results.append(Result.create_from_dict(row))
+        return results
+
+    @staticmethod
+    def static_import_result(path: str, fileName: str) -> List[Result]:
+        """
+        Static function for importing results
+        :param path: Path to directory containing csv file, can't be None
+        :param fileName: Name of the file, can't be None
+        :return: List of imported Results
+        """
+        return Classroom.import_results(None, path, fileName)
 
 
 if __name__ == "__main__":
