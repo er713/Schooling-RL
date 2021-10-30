@@ -130,3 +130,6 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# Using only for test, if needed line below should be removed
+__main__.py

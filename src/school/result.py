@@ -4,7 +4,7 @@ from numpy import mean
 
 
 class Result:
-    def __init__(self, mark: float, duration: float, task: object, idStudent: int) -> None:
+    def __init__(self, mark: float, duration: float, task: object, idStudent: int, isExam: bool) -> None:
         """
         :param mark: result of task (for now 0 or 1 but in future it can be continuous [0,1])
         :param duration: how long it take to solve the task 
@@ -15,6 +15,7 @@ class Result:
         self.duration = duration
         self.task = task
         self.idStudent = idStudent
+        self.isExam = isExam
 
     @staticmethod
     def get_mean_result(results: List[Result]) -> (float, float):
