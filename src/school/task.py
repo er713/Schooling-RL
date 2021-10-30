@@ -47,5 +47,6 @@ class Task:
             combined[skill] = diff
         return cls(combined)
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo):
         return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)
+

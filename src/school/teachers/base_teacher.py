@@ -17,7 +17,7 @@ class BaseTeacher(Teacher):
         if student.id in self.studentsProficiencies:
             studentProficiencies = self.studentsProficiencies[student.id]
         else:
-            studentProficiencies = [0]*self.nSkills
+            studentProficiencies = self.__get_new_student_proff()
             # add new student.id to studentProf dict
             self.studentsProficiencies[student.id] = studentProficiencies
         skillNum = np.argmin(studentProficiencies)
@@ -27,20 +27,36 @@ class BaseTeacher(Teacher):
         min_diff = np.inf
         best_task = None
         for task in self.tasks:
-            diff = abs(studentProficiency - task.taskDifficulties[skillNum])
-            if diff < min_diff:
-                min_diff = diff
-                best_task = task
-
+            if skillNum in task.taskDifficulties:
+                diff = abs(studentProficiency - task.taskDifficulties[skillNum])
+                if diff < min_diff:
+                    min_diff = diff
+                    best_task = task
+            else:
+                continue
         return best_task
 
     def receive_result(self, result) -> None:
         baseProfScaler = 0.1
         baseDiffScaler = 0.01
-        studentProficiencies = self.studentsProficiencies[result.idStudent]
+        unknownTask = False
+        try:
+            # if it was exam task reset record of student's proficiencies
+            if result.isExam:
+                self.studentsProficiencies[result.idStudent] = self.__get_new_student_proff()
+                return
+            studentProficiencies = self.studentsProficiencies[result.idStudent]
+        except KeyError:
+            raise KeyError(
+                "StudentId: " + str(result.idStudent) + " hand out result, without asking for any task before.")
         mark = result.mark
         taskId = result.task.id
-        estimatedTask = [task for task in self.tasks if task.id == taskId][0]
+        # Check if result's task exists in teacher's tasks pool
+        if result.task.id in [task.id for task in self.tasks]:
+            estimatedTask = [task for task in self.tasks if task.id == taskId][0]
+        else:
+            unknownTask = True
+            estimatedTask = result.task
         relativeDifficulties = {}
         # calculate relative difficulties
         for skillNo, difficulty in estimatedTask.taskDifficulties.items():
@@ -52,9 +68,12 @@ class BaseTeacher(Teacher):
                 correctionScaler[skillNo] = 1 + max([relativeDifficulty, -1])
             else:
                 correctionScaler[skillNo] = -(1 - min([relativeDifficulty, 1]))
-            studentProficiencies[skillNo] += baseProfScaler*correctionScaler[skillNo]
-            if self.estimateDifficulty:
-                estimatedTask.taskDifficulties[skillNo] -= baseDiffScaler*correctionScaler[skillNo]
+            studentProficiencies[skillNo] += baseProfScaler * correctionScaler[skillNo]
+            if self.estimateDifficulty and not unknownTask:
+                estimatedTask.taskDifficulties[skillNo] -= baseDiffScaler * correctionScaler[skillNo]
 
+    def __get_new_student_proff(self):
+        return self.nSkills * [0]
+      
     def __str__(self):
         return 'BaseTeacher'
