@@ -1,14 +1,21 @@
 from .teacher import Teacher
+from .. import Task
 import random
 import tensorflow as tf
 from typing import List
 from abc import abstractmethod
-
+from .constants import *
 
 class TeacherRL(Teacher):
-    def __init__(self, nSkills: int, tasks: List[Task], epsilon: float = .995, decay_epsilon: float = .999,
-    min_eps: float = .01, gamma: float = .8, learning_rate: float = 1e-5 ,**kwargs):
-        super.__init__(nSkills, tasks, **kwargs)
+    def __init__(self, nSkills: int,
+                tasks: List[Task],
+                epsilon: float = EPSILON,
+                decay_epsilon: float = DECAY_EPSILON,
+                min_eps: float = MIN_EPS,
+                gamma: float = GAMMA,
+                learning_rate: float = LEARNING_RATE,
+                **kwargs):
+        super().__init__(nSkills, tasks, **kwargs)
         self.epsilon = epsilon
         self.decay_epsilon = decay_epsilon
         self.min_eps = min_eps
@@ -17,7 +24,7 @@ class TeacherRL(Teacher):
     
     def choose_task(self, student, is_learning: bool = True) -> Task:
         #ekspoalatacja
-        if not is_learning or random() > self.epsilon:
+        if not is_learning or random.random() > self.epsilon:
             state = self.get_state(student)
             action = self.get_action(state)
         #eksploracja
