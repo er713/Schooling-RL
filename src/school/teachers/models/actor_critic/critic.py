@@ -4,7 +4,7 @@ import tensorflow as tf
 class Critic(tf.keras.Model):
 
     def __init__(self):
-        super.__init__(self)
+        super().__init__()
         self.model = tf.keras.Sequential([
             tf.keras.layers.Dense(units=100, activation='relu'),
             tf.keras.layers.Dense(units=100, activation='relu'),

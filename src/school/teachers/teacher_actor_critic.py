@@ -1,7 +1,7 @@
 from typing import List
 import tensorflow_probability as tfp
 import tensorflow as tf
-import losses
+from . import losses
 from . import Teacher
 from .. import Task
 from .models.actor_critic import *
@@ -26,7 +26,8 @@ class TeacherActorCritic(Teacher):
         :param shift: Shift to the past/how many recent Results skip. Has to be positive.
         :return: State - list of int/float of shape 3*self.nLast
         """
-        student_results = self.results.get(idStudent, [])[-(self.nLast + shift):(len(self.tasks) - shift)]
+        student_results = self.results.get(idStudent, [])[-(self.nLast + shift):(len(self.results.get(idStudent, [])) - shift)]
+        #print("Results: ",student_results)
         state = []
         for result in student_results:
             state.append(result.task.id)
@@ -35,19 +36,22 @@ class TeacherActorCritic(Teacher):
         while len(state) < self.nLast * 3:
             [state.append(-100) for _ in
              range(3)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
-        return state
+        
+        #print("State: ",state)
+        return tf.reshape(tf.convert_to_tensor(state),[1,self.nLast*3])
 
     def choose_task(self, student) -> Task:
         state = self._get_state(student)
         logits = self.actor(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
-        action = action_probabilities.sample()
-        task = [task for task in self.tasks if task.id == action][0]
+        action = action_probabilities.sample(sample_shape = (1,1) )
+        print(action)
+        task = [task_ for task_ in self.tasks if task_.id == action][0]
         return task
 
     def receive_result(self, result, reward=None, last=False) -> None:
         student = result.idStudent
-        if reward is None and not result.isExam:
+        if result.task and not result.isExam:
             self.results[student] = self.results.get(result.idStudent, [])
             self.results[student].append(result)
         if not result.isExam and not last:
@@ -57,7 +61,7 @@ class TeacherActorCritic(Teacher):
                 done = 1
             if reward is None:
                 reward = 0
-            self._learn(self._get_state(student, shift=1), result.task.id, self._get_state(student), reward, done)
+            self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id, self._get_state(student), reward, done)
             if reward > 0:
                 self.results[student] = []  # remove student history after exam
 
@@ -69,7 +73,7 @@ class TeacherActorCritic(Teacher):
         """
         Dokumentacja
         """
-        with tf.GradientTape() as tape:
+        with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
             q = self.critic(state)
             q_next = self.critic(next_state)
             logits = self.actor(state)
@@ -80,8 +84,8 @@ class TeacherActorCritic(Teacher):
             actor_loss = losses.actor_loss(logits,action,δ)
             critic_loss = δ ** 2  # MSE?
 
-        actor_grads = tape.gradient(actor_loss, self.actor.trainable_variables)
-        critic_grads = tape.gradient(critic_loss, self.critic.trainable_variables)
+        actor_grads = actor_tape.gradient(actor_loss, self.actor.trainable_variables)
+        critic_grads = critic_tape.gradient(critic_loss, self.critic.trainable_variables)
 
         self.actor_opt.apply_gradients(zip(actor_grads, self.actor.trainable_variables))
         self.critic_opt.apply_gradients(zip(critic_grads, self.critic.trainable_variables))
