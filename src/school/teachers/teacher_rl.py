@@ -33,7 +33,7 @@ class TeacherRL(Teacher):
         return action
     
     def receive_result(self, result, reward=None, last=False) -> None:
-        self.epsilon = max(self.min_eps, self.epsilon - self.decay_epsilon)
+        self.epsilon = max(self.min_eps, self.epsilon * self.decay_epsilon)
     
     @abstractmethod
     def get_state(self):
