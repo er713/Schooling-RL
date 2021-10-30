@@ -43,8 +43,7 @@ class TeacherNLastHistory(TeacherRL, ABC):
             self._receive_result_one_step(result, student, reward, last)
             if reward is not None:
                 self.results[student] = []  # remove student history after exam
-        
-        super().receive_result(result)
+                super().receive_result(result)
 
   
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
