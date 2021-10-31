@@ -65,3 +65,7 @@ class RashStudent(Student):
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength
             self._proficiency[idx] = max(min(self._proficiency[idx], 3), -3)
+
+    @staticmethod
+    def get_name():
+        return 'RashStudent'

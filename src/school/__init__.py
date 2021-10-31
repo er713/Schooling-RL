@@ -1,7 +1,10 @@
 """
 School module __init__ file
 """
-__all__ = ["Classroom", "Result", "Task"]
-from .result import Result
+__all__ = ["Classroom", "Result", "Task", "Plotter", "import_results", "export_results"]
+
 from .task import Task
+from .result import Result
+from .io import *
+from .plotter import Plotter
 from .classroom import Classroom

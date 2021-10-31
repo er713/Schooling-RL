@@ -39,6 +39,10 @@ class Student:
         """
         raise NotImplementedError('_update_proficiency was not implemented')
 
+    @staticmethod
+    def get_name():
+        return 'Student'
+
     def __str__(self):
         return "studentID: " + str(self.id) + \
                "\ndesireToLearn: " + str(self._desireToLearn) + \

@@ -4,7 +4,7 @@ from .. import Task
 
 
 class Teacher:
-    def __init__(self, nSkills: int, tasks: List[Task]) -> None:
+    def __init__(self, nSkills: int, tasks: List[Task], **kwargs) -> None:
         self.tasks = tasks
         self.nSkills = nSkills
 
@@ -20,3 +20,6 @@ class Teacher:
     @abstractmethod
     def receive_result(self, result) -> None:
         raise NotImplementedError('receive_result was not implemented')
+
+    def __str__(self):
+        return 'Teacher'
