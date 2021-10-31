@@ -1,12 +1,13 @@
 from .. import Task
 from . import Teacher
 from copy import deepcopy
+from typing import List
 import numpy as np
 
 
 class BaseTeacher(Teacher):
 
-    def __init__(self, nSkills: int, tasks: list[Task], estimateDifficulty: bool = True) -> None:
+    def __init__(self, nSkills: int, tasks: List[Task], estimateDifficulty: bool = True) -> None:
         copiedTasks = [deepcopy(task) for task in tasks]
         super().__init__(tasks=copiedTasks, nSkills=nSkills)
         self.studentsProficiencies = {}
