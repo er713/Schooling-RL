@@ -4,10 +4,10 @@ from .. import Task
 
 
 class RandomTeacher(Teacher):
-    def __init__(self, nSkills: int, tasks: list[Task] = None) -> None:
+    def __init__(self, nSkills: int, tasks: list[Task] = None, **kwargs) -> None:
         if tasks is None:
             tasks = []
-        super().__init__(nSkills, tasks=tasks)
+        super().__init__(nSkills, tasks=tasks, **kwargs)
     
     def choose_task(self, student) -> Task:
         return random.choice(self.tasks)

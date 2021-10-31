@@ -6,9 +6,9 @@ import numpy as np
 
 class BaseTeacher(Teacher):
 
-    def __init__(self, nSkills: int, tasks: list[Task], estimateDifficulty: bool = True) -> None:
+    def __init__(self, nSkills: int, tasks: list[Task], estimateDifficulty: bool = True, **kwargs) -> None:
         copiedTasks = [deepcopy(task) for task in tasks]
-        super().__init__(tasks=copiedTasks, nSkills=nSkills)
+        super().__init__(tasks=copiedTasks, nSkills=nSkills, **kwargs)
         self.studentsProficiencies = {}
         self.estimateDifficulty = estimateDifficulty
 

@@ -18,7 +18,7 @@ class Classroom:
     def __init__(self, nSkills: int, teacherModel: Type[Teacher], studentModel: Type[Student],
                  tasksSkillsDifficulties: List[Optional[Dict[int, float]]] = None, nStudents: int = 1,
                  minSkill: int = 1, maxSkill: int = None, difficultiesRange: Tuple[float, float] = (-3, 3),
-                 saveResultsNumber: int = 1e5, now: datetime = None) -> None:
+                 saveResultsNumber: int = 1e5, now: datetime = None, **kwargs) -> None:
         """
         :param nSkills: The number of skills
         :param teacherModel: Class implementing Teacher interface.
@@ -32,6 +32,7 @@ class Classroom:
         :param difficultiesRange: (Task generating) Tuple of minimum and maximum difficulties that task can have.
         :param saveResultsNumber: Number of Results for which cache is dumped to file (methods export_results).
         :param now: Datetime for creating name of file with exported Results.
+        :param kwargs: Parameters for teacherModel constructor.
         """
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
@@ -55,7 +56,7 @@ class Classroom:
         self.students: List[Student] = []  # Generated during learning_process method
         self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, **kwargs)
 
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber

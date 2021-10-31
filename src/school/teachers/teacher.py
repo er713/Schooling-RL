@@ -3,7 +3,7 @@ from .. import Task
 
 
 class Teacher:
-    def __init__(self, nSkills: int, tasks: list[Task]) -> None:
+    def __init__(self, nSkills: int, tasks: list[Task], **kwargs) -> None:
         self.tasks = tasks
         self.nSkills = nSkills
 
