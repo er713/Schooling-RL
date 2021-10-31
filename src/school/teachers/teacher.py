@@ -1,9 +1,10 @@
 from abc import abstractmethod
+from typing import List
 from .. import Task
 
 
 class Teacher:
-    def __init__(self, nSkills: int, tasks: list[Task]) -> None:
+    def __init__(self, nSkills: int, tasks: List[Task]) -> None:
         self.tasks = tasks
         self.nSkills = nSkills
 
