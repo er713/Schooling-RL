@@ -2,13 +2,14 @@ from .student import Student
 from ..result import Result
 from ..task import Task
 from scipy.special import expit
+from typing import List
 import numpy as np
 import random
 
 
 class RashStudent(Student):
 
-    def __init__(self, id: int, proficiency: list[float], desireToLearn: float = 1,
+    def __init__(self, id: int, proficiency: List[float], desireToLearn: float = 1,
                  baseChangeParam: float = 0.1) -> None:
         """
         :param id: The id of student

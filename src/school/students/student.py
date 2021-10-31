@@ -1,10 +1,11 @@
 from abc import abstractmethod
+from typing import List
 
 from .. import Task, Result
 
 
 class Student:
-    def __init__(self, id: int = 0, proficiency: list[float] = [], desireToLearn: float = 1) -> None:
+    def __init__(self, id: int = 0, proficiency: List[float] = [], desireToLearn: float = 1) -> None:
         """
         :param id: The id of student
         :param proficiency: The list of skills proficiency in range [-1,1].
