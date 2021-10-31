@@ -1,4 +1,4 @@
-class Agent(object):
+class DQNTeacher(object):
     """Deep Q-learning agent."""
 
     def __init__(self):
