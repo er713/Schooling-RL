@@ -2,12 +2,10 @@ import random
 import warnings
 from typing import Type, Tuple, Dict, List, Optional
 import numpy as np
-import csv
 from os import makedirs
-from os.path import isfile
 from datetime import datetime
 
-from . import Task, Result
+from . import Task, Result, Plotter, import_results, export_results
 from .students import Student
 from .teachers import Teacher
 
@@ -64,7 +62,7 @@ class Classroom:
         if now is None:
             now = datetime.now()
         self.exportFileName: str = f"{self._studentModel.get_name()}__{self.nStudents}_{self.nSkills}__{now.year}-" + \
-                                   f"{now.month}-{now.day}_{now.time().hour}-{now.time().minute}.csv"
+                                   f"{now.month}-{now.day}_{now.time().hour}-{now.time().minute}."
 
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
@@ -136,8 +134,9 @@ class Classroom:
         return Result.get_mean_result(results)
 
     def run(self, timeToExam: int, learningType: str = 'all-one-by-one', minimalImprove: Tuple[int, float] = None,
-            minimalThreshold: Tuple[int, float] = None, numberOfIteration: int = 1,
-            examTasksDifficulties: List[Optional[Dict[int, float]]] = None, saveResults: bool = True) -> None:
+            minimalThreshold: Tuple[int, float] = None, numberOfIteration: int = 1, visualiseResults: bool = True,
+            examTasksDifficulties: List[Optional[Dict[int, float]]] = None, saveResults: bool = True,
+            savePlot: bool = False) -> None:
         """
         Function responsible for running learning and evaluation process
         :param timeToExam: Number of Tasks proposed to each Student.
@@ -148,13 +147,21 @@ class Classroom:
         Work only of minimalImprove is None.
         :param numberOfIteration: How many times learning_loop will be called.
         Works only if minimalImprove and minimalThreshold are None.
+        :param visualiseResults: Show graph with exam Results.
         :param examTasksDifficulties: List of dictionary of skill and difficulties. If None, generate 2 Task
         with difficulty 2 for each skill.
         :param saveResults: If True, dump all Results to file.
+        :param savePlot: If True, save plot, works only if visualiseResults is True.
         """
         if learningType == self._SINGLE_STUDENT and self.nStudents != 1:
             warnings.warn('Probably nStudents should be 1, because only one student will be taught before exam',
                           UserWarning)
+
+        if visualiseResults:
+            plotter = Plotter()
+        else:
+            plotter = None
+        savePlot = savePlot and visualiseResults
 
         examTasks = []  # Generating tasks for exam
         if examTasksDifficulties is None:
@@ -166,17 +173,20 @@ class Classroom:
 
         if minimalImprove is not None:
             self._run_minimal_improvement(timeToExam, learningType, minimalImprove[0], minimalImprove[1], examTasks,
-                                          saveResults=saveResults)
+                                          saveResults=saveResults, plotter=plotter)
         elif minimalThreshold is not None:
             self._run_minimal_threshold(timeToExam, learningType, minimalThreshold[0], minimalThreshold[1], examTasks,
-                                        saveResults=saveResults)
+                                        saveResults=saveResults, plotter=plotter)
         else:
             for epoch in range(numberOfIteration):
-                result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
+                result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults, plotter)
                 print(f"Epoch: {epoch}, mean score on exam: {result}")
+        if savePlot:
+            makedirs(f"./data/{self.teacher}/", exist_ok=True)
+            plotter.plot_learning_save(f"./data/{self.teacher}/" + self.exportFileName + 'png')
 
     def _run_minimal_improvement(self, timeToExam: int, learningType: str, nEpoch: int, minImprovement: float,
-                                 examTasks: List[Task], saveResults: bool = True) -> None:
+                                 examTasks: List[Task], saveResults: bool = True, plotter: Plotter = None) -> None:
         """
         Function responsible for running learning until there is no improve.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
@@ -185,6 +195,7 @@ class Classroom:
         :param minImprovement: Minimal difference to approve change as improvement.
         :param examTasks: List of Task on exam.
         :param saveResults: If True, dump all Results to file.
+        :param plotter: Class for drawing plots.
         """
         lastResult = 0
         epoch = -1
@@ -192,7 +203,7 @@ class Classroom:
 
         while True:
             epoch += 1
-            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
+            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults, plotter)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result - lastResult < minImprovement:
                 epochWithoutImprovement += 1
@@ -203,7 +214,7 @@ class Classroom:
                 break
 
     def _run_minimal_threshold(self, timeToExam: int, learningType: str, nEpoch: int, threshold: float,
-                               examTasks: List[Task], saveResults: bool = True) -> None:
+                               examTasks: List[Task], saveResults: bool = True, plotter: Plotter = None) -> None:
         """
         Function responsible for running learning until score is above threshold for specified number of epoch.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
@@ -212,13 +223,14 @@ class Classroom:
         :param threshold: Threshold.
         :param examTasks: List of Task on exam.
         :param saveResults: If True, dump all Results to file.
+        :param plotter: Class for drawing plots.
         """
         epoch = -1
         epochWithThreshold = 0
 
         while True:
             epoch += 1
-            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults)
+            result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults, plotter)
             print(f"Epoch: {epoch}, mean score on exam: {result}")
             if result >= threshold:
                 epochWithThreshold += 1
@@ -228,17 +240,20 @@ class Classroom:
                 break
 
     def _run_single_learning(self, timeToExam: int, learningType: str, examTasks: List[Task],
-                             saveResults: bool = True) -> (float, float):
+                             saveResults: bool = True, plotter: Plotter = None) -> (float, float):
         """
         Assistant function for running one learning process.
         :param timeToExam: Frequency of evaluation, equal to learning_loop.
         :param learningType: String, one of: 'single-student',' all-one-by-one', 'all-random'. For more check learning_loop.
         :param examTasks: List of Task on exam.
         :param saveResults: If True, dump all Results to file.
+        :param plotter: Class for drawing plots.
         :return: (mean mark on exam, mean duration on exam)
         """
         self.learning_process(timeToExam, learningType)
         mark, duration = self.make_exam(examTasks)
+        if plotter is not None:
+            plotter.plot_learning_results(mark)
         if saveResults:
             self.export_results(forceDump=True)  # TODO: think about doing this on other thread due to longer disk I/O
         return mark, duration
@@ -286,13 +301,7 @@ class Classroom:
                 path = f"./data/{self.teacher}/"
             makedirs(path, exist_ok=True)  # creating directory if not exists
 
-            filedNames = list(self.results[0].__dict__.keys())
-            not_write_header = isfile(path + self.exportFileName)
-            with open(path + self.exportFileName, 'a') as file_csv:
-                writer = csv.DictWriter(file_csv, dialect='unix', fieldnames=filedNames)
-                if not not_write_header:
-                    writer.writeheader()
-                writer.writerows([res.__dict__ for res in self.results])
+            export_results(path + self.exportFileName + 'csv', self.results)
             self.results = []
 
     def import_results(self, path: str = None, fileName: str = None) -> List[Result]:
@@ -306,24 +315,9 @@ class Classroom:
         if path is None:
             path = f"./data/{self.teacher}/"
         if fileName is None:
-            fileName = self.exportFileName
+            fileName = self.exportFileName + 'csv'
 
-        results = []
-        with open(path + fileName, 'r') as file:
-            reader = csv.DictReader(file, dialect='unix', fieldnames=None)
-            for row in reader:
-                results.append(Result.create_from_dict(row))
-        return results
-
-    @staticmethod
-    def static_import_result(path: str, fileName: str) -> List[Result]:
-        """
-        Static function for importing results
-        :param path: Path to directory containing csv file, can't be None
-        :param fileName: Name of the file, can't be None
-        :return: List of imported Results
-        """
-        return Classroom.import_results(None, path, fileName)
+        return import_results(path + fileName)
 
 
 if __name__ == "__main__":
