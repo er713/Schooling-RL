@@ -2,11 +2,11 @@
 main file
 """
 from school import Classroom, Plotter, import_results
-from school.teachers import RandomTeacher, BaseTeacher
+from school.teachers import *
 from school.students import RashStudent
 
 if __name__ == '__main__':
-    c = Classroom(7, BaseTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
+    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=100, gamma=0.9, nLast=5, learning_rate=0.05)
     c.run(timeToExam=100, numberOfIteration=10, saveResults=True, visualiseResults=False, savePlot=True)
 
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
