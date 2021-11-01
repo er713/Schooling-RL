@@ -7,7 +7,6 @@ import numpy as np
 
 class BaseTeacher(Teacher):
 
-
     def __init__(self, nSkills: int, tasks: List[Task], estimateDifficulty: bool = True, **kwargs) -> None:
         copiedTasks = [deepcopy(task) for task in tasks]
         super().__init__(tasks=copiedTasks, nSkills=nSkills, **kwargs)
@@ -38,7 +37,7 @@ class BaseTeacher(Teacher):
                 continue
         return best_task
 
-    def receive_result(self, result) -> None:
+    def receive_result(self, result, reward=None) -> None:
         baseProfScaler = 0.1
         baseDiffScaler = 0.01
         unknownTask = False
