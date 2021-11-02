@@ -7,8 +7,8 @@ from school.students import RashStudent
 
 if __name__ == '__main__':
    
-    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=10, gamma=0.9, nLast=5, learning_rate=0.05)
-    c.run(timeToExam=100, numberOfIteration=10, saveResults=False, visualiseResults=True, savePlot=False)
+    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=5, gamma=0.9, nLast=5, learning_rate=0.05, verbose=True)
+    c.run(timeToExam=10, numberOfIteration=10, saveResults=False, visualiseResults=True, savePlot=False)
 
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
     # print(res[0].mark, res[0].isExam)

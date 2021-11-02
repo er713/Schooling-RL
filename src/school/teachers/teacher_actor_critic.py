@@ -7,16 +7,17 @@ from .. import Task
 from .models.actor_critic import *
 
 
-
 class TeacherActorCritic(Teacher):
-    def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int, **kwargs):
+    def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int,
+                 verbose: bool = False, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
-        self.actor = Actor(len(tasks))
+        self.actor = Actor(len(tasks), verbose=verbose)
         self.critic = Critic()
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.gamma = gamma
         self.nLast = nLast
+        self.verbose = verbose
         self.results = dict()
 
     def _get_state(self, idStudent: int, shift: int = 0) -> List[int]:
@@ -26,32 +27,35 @@ class TeacherActorCritic(Teacher):
         :param shift: Shift to the past/how many recent Results skip. Has to be positive.
         :return: State - list of int/float of shape 3*self.nLast
         """
-        student_results = self.results.get(idStudent, [])[-(self.nLast + shift):(len(self.results.get(idStudent, [])) - shift)]
-        #print("Results: ",student_results)
+        one_student = self.results.get(idStudent, [])
+        student_results = one_student[-(self.nLast + shift):(len(one_student) - shift)]
+        # print("Results: ",student_results)
         state = []
         for result in student_results:
             state.append(result.task.id)
             state.append(list(result.task.taskDifficulties.keys())[0])
             state.append(result.mark)
         while len(state) < self.nLast * 3:
-            [state.append(-100) for _ in
-             range(3)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
-        
-        #print("State: ",state)
-        return tf.reshape(tf.convert_to_tensor(state),[1,self.nLast*3])
+            [state.append(-10) for _ in
+             range(2)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
+            state.append(0)
+
+        # print("State: ",state)
+        return tf.reshape(tf.convert_to_tensor(state), [1, self.nLast * 3])
 
     def choose_task(self, student) -> Task:
-        state = self._get_state(student)
+        state = self._get_state(student.id)
         logits = self.actor(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
-        action = action_probabilities.sample(sample_shape = (1,1) )
-        print(action)
+        action = action_probabilities.sample(sample_shape=())
+        if self.verbose:
+            print(action)
         task = [task_ for task_ in self.tasks if task_.id == action][0]
         return task
 
     def receive_result(self, result, reward=None, last=False) -> None:
         student = result.idStudent
-        if result.task and not result.isExam:
+        if reward is None and not result.isExam:
             self.results[student] = self.results.get(result.idStudent, [])
             self.results[student].append(result)
         if not result.isExam and not last:
@@ -61,7 +65,8 @@ class TeacherActorCritic(Teacher):
                 done = 1
             if reward is None:
                 reward = 0
-            self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id, self._get_state(student), reward, done)
+            self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id,
+                        self._get_state(student), reward, done)
             if reward > 0:
                 self.results[student] = []  # remove student history after exam
 
@@ -80,8 +85,7 @@ class TeacherActorCritic(Teacher):
 
             δ = reward + self.gamma * q_next * (1 - done) - q
 
-
-            actor_loss = losses.actor_loss(logits,action,δ)
+            actor_loss = losses.actor_loss(logits, action, δ)
             critic_loss = δ ** 2  # MSE?
 
         actor_grads = actor_tape.gradient(actor_loss, self.actor.trainable_variables)

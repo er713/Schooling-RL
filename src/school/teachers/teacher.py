@@ -21,5 +21,6 @@ class Teacher:
     def receive_result(self, result, reward=None, last=False) -> None:
         raise NotImplementedError('receive_result was not implemented')
 
+    # @abstractmethod
     def __str__(self):
-        return 'Teacher'
+        return self.__class__.__name__

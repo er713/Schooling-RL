@@ -16,5 +16,5 @@ class RandomTeacher(Teacher):
     def receive_result(self, result, reward=None, last=False) -> None:
         pass
 
-    def __str__(self):
-        return 'RandomTeacher'
+    # def __str__(self):
+    #     return 'RandomTeacher'

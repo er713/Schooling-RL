@@ -76,5 +76,5 @@ class BaseTeacher(Teacher):
     def __get_new_student_proff(self):
         return self.nSkills * [0]
       
-    def __str__(self):
-        return 'BaseTeacher'
+    # def __str__(self):
+    #     return 'BaseTeacher'
