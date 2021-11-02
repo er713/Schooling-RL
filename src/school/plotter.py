@@ -14,7 +14,6 @@ class Plotter:
     def __init__(self) -> None:
         self.results = []
 
-
     def plot_learning_results(self, result: float) -> None:
         """
         Function responsible for plot results (student's mean score on exams (epochs?)) during learning
@@ -113,9 +112,9 @@ class Plotter:
 
 
     @staticmethod
-    def plot_compare_results(results_path : List[str],
+    def plot_compare_results(results_path: List[str],
                              save_path: str = None,
-                             custom_titles : list[str] = None):
+                             custom_titles: List[str] = None):
         """
         Function responsible for plot multiple results (suplots)
         :param List[str] results_path: List contains results .csv files paths.
@@ -126,31 +125,30 @@ class Plotter:
             os.path.basename(your_path)
         """
         titles = custom_titles if custom_titles else \
-            [os.path.basename(path) for path in results_path] #Uwaga może nie działać prawidłowo na Windowsie -- potrzebny feedback xD    
+            [os.path.basename(path) for path in
+             results_path]  # Uwaga może nie działać prawidłowo na Windowsie -- potrzebny feedback xD
         n_row = len(results_path)
         fig = plt.figure()
-        
+
         for i in range(n_row):
             results = Result.get_exams_means(import_results(results_path[i]))
-            Plotter.__subplots(n_row,i+1, results, titles[i])
-        
-        plt.tight_layout()   
+            Plotter.__subplots(n_row, i + 1, results, titles[i])
+
+        plt.tight_layout()
         plt.show()
-        
+
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
-    
-    
+
     @staticmethod
-    def __subplots(n_rows: int, i_row: int, results: List[float],title: str):
-        plt.subplot(n_rows,1,i_row)
-        plt.plot(range(len(results)),results)
+    def __subplots(n_rows: int, i_row: int, results: List[float], title: str):
+        plt.subplot(n_rows, 1, i_row)
+        plt.plot(range(len(results)), results)
         plt.ylim([0., 1.])
         plt.xlabel('Numer egzaminu')
         plt.ylabel('Średni wynik')
         plt.title(title)
-        
-        
+
     @staticmethod
     def __plot_dynamically(results: List[float] = [], save_path: str = None):
         plt.ion()
@@ -159,17 +157,17 @@ class Plotter:
         line, = ax.plot(range(len(results)), results)
         line.set_ydata(results)
         ax.relim()
-        ax.autoscale_view(True,True,True)
+        ax.autoscale_view(True, True, True)
         ax.set_xlabel('Numer egzaminu')
         ax.set_ylabel('Średni wynik studentów na egzaminie')
         ax.set_title('Wykres zdobytych nagród w czasie')
-        ax.set_ylim([0,1])
+        ax.set_ylim([0, 1])
         plt.draw()
         plt.pause(1)
-     
+
         if save_path:
             ax.figure.savefig(save_path, dpi=ax.figure.dpi)
-            
+
     @staticmethod
     def __subplots(n_rows: int, i_row: int, results: List[float], title: str):
         plt.subplot(n_rows, 1, i_row)
