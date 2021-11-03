@@ -12,7 +12,7 @@ from .models.actor_critic import *
 
 class TeacherActorCritic(Teacher):
     def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int,
-                 verbose: bool = False, epsilon: float = 70, end_random_iteration=35, **kwargs):
+                 verbose: bool = False, epsilon: float = 90, end_random_iteration=35, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
         self.actor = Actor(len(tasks), verbose=verbose)
         self.critic = Critic()
@@ -23,7 +23,7 @@ class TeacherActorCritic(Teacher):
         self.verbose = verbose
         self.epsilon = epsilon
         self.results = dict()
-        self.random_action = True
+        # self.random_action = True
         self.epsilon_diff = epsilon/end_random_iteration
 
         self.choices = np.zeros((len(self.tasks),), dtype=np.int_)  # Only for checking if action is diverse
@@ -54,7 +54,7 @@ class TeacherActorCritic(Teacher):
     def choose_task(self, student) -> Task:
         if choice(range(100)) < self.epsilon:
             action = choice(range(len(self.tasks)))
-            self.random_action = True
+            # self.random_action = True
         else:
             state = self._get_state(student.id)
             logits = self.actor(state)
@@ -62,30 +62,30 @@ class TeacherActorCritic(Teacher):
             action = action_probabilities.sample(sample_shape=())
             self.choices[action.numpy()[0]] += 1
             # print(action.numpy()[0])
-            self.random_action = False
+            # self.random_action = False
         if self.verbose:
             print(action)
         task = [task_ for task_ in self.tasks if task_.id == action][0]
         return task
 
     def receive_result(self, result, reward=None, last=False) -> None:
-        if not self.random_action:
-            student = result.idStudent
-            if reward is None and not result.isExam:
-                self.results[student] = self.results.get(result.idStudent, [])
-                self.results[student].append(result)
-            if not result.isExam and not last:
-                if reward is None:
-                    done = 0
-                else:
-                    done = 1
-                if reward is None:
-                    reward = 0
-                self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id,
-                            self._get_state(student), reward, done)
-                if reward > 0:
-                    self.results[student] = []  # remove student history after exam
-                    self.epsilon -= 0.5
+        # if not self.random_action:
+        student = result.idStudent
+        if reward is None and not result.isExam:
+            self.results[student] = self.results.get(result.idStudent, [])
+            self.results[student].append(result)
+        if not result.isExam and not last:
+            if reward is None:
+                done = 0
+            else:
+                done = 1
+            if reward is None:
+                reward = 0
+            self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id,
+                        self._get_state(student), reward, done)
+            if reward > 0:
+                self.results[student] = []  # remove student history after exam
+                self.epsilon -= 0.5
 
     """
     Mając state wykonaj akcje a, zaobserwuj nagrodę reward i następnik next_state
