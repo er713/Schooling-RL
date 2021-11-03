@@ -9,8 +9,9 @@ import numpy as np
 
 if __name__ == '__main__':
    
-    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=50, gamma=0.99, nLast=5, learning_rate=0.05, verbose=False)
-    c.run(timeToExam=30, numberOfIteration=15, saveResults=False, visualiseResults=True, savePlot=False)
+    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=30, gamma=0.99, nLast=5, learning_rate=0.05,
+                  verbose=False, end_random_iteration=10)
+    c.run(timeToExam=50, numberOfIteration=15, saveResults=False, visualiseResults=True, savePlot=False)
 
     ch: np.ndarray = c.teacher.choices
     print(ch.mean(), ch.std())
