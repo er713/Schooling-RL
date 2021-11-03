@@ -1,6 +1,9 @@
 from typing import List
 import tensorflow_probability as tfp
 import tensorflow as tf
+from random import choice
+import numpy as np
+
 from . import losses
 from . import Teacher
 from .. import Task
@@ -9,7 +12,7 @@ from .models.actor_critic import *
 
 class TeacherActorCritic(Teacher):
     def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int,
-                 verbose: bool = False, **kwargs):
+                 verbose: bool = False, epsilon: float = 70, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
         self.actor = Actor(len(tasks), verbose=verbose)
         self.critic = Critic()
@@ -18,7 +21,10 @@ class TeacherActorCritic(Teacher):
         self.gamma = gamma
         self.nLast = nLast
         self.verbose = verbose
+        self.epsilon = epsilon
         self.results = dict()
+
+        self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
 
     def _get_state(self, idStudent: int, shift: int = 0) -> List[int]:
         """
@@ -44,10 +50,15 @@ class TeacherActorCritic(Teacher):
         return tf.reshape(tf.convert_to_tensor(state), [1, self.nLast * 3])
 
     def choose_task(self, student) -> Task:
-        state = self._get_state(student.id)
-        logits = self.actor(state)
-        action_probabilities = tfp.distributions.Categorical(logits=logits)
-        action = action_probabilities.sample(sample_shape=())
+        if choice(range(100)) < self.epsilon:
+            action = choice(range(len(self.tasks)))
+        else:
+            state = self._get_state(student.id)
+            logits = self.actor(state)
+            action_probabilities = tfp.distributions.Categorical(logits=logits)
+            action = action_probabilities.sample(sample_shape=())
+            self.choices[action.numpy()[0]] += 1
+            # print(action.numpy()[0])
         if self.verbose:
             print(action)
         task = [task_ for task_ in self.tasks if task_.id == action][0]
@@ -69,6 +80,7 @@ class TeacherActorCritic(Teacher):
                         self._get_state(student), reward, done)
             if reward > 0:
                 self.results[student] = []  # remove student history after exam
+                self.epsilon -= 0.5
 
     """
     Mając state wykonaj akcje a, zaobserwuj nagrodę reward i następnik next_state
