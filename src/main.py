@@ -2,13 +2,20 @@
 main file
 """
 from school import Classroom, Plotter, import_results
-from school.teachers import RandomTeacher, BaseTeacher
+from school.teachers import *
 from school.students import RashStudent
 
-if __name__ == '__main__':
-    c = Classroom(7, BaseTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
-    c.run(timeToExam=100, numberOfIteration=10, saveResults=True, visualiseResults=False, savePlot=True)
+import numpy as np
 
+if __name__ == '__main__':
+   
+    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=30, gamma=0.99, nLast=5, learning_rate=0.05,
+                  verbose=False, end_random_iteration=10)
+    c.run(timeToExam=50, numberOfIteration=15, saveResults=False, visualiseResults=True, savePlot=False)
+
+    ch: np.ndarray = c.teacher.choices
+    print(ch.mean(), ch.std())
+    print(ch)
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
     # print(res[0].mark, res[0].isExam)
 
