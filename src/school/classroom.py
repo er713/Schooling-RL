@@ -115,7 +115,9 @@ class Classroom:
         :param isExam: If Task is part of exam.
         """
         if student.want_task():
-            result = student.solve_task(self.teacher.choose_task(student), isExam=isExam)
+            chosenTaskId=self.teacher.choose_task(student)
+            task=self.tasks[chosenTaskId]
+            result = student.solve_task(task, isExam=isExam)
             self.results.append(result)
             self.teacher.receive_result(result, last=last)
 
@@ -135,7 +137,7 @@ class Classroom:
             mean_mark, _ = Result.get_mean_result(results)
             mean_results.append(mean_mark)
             # Give teacher reward - mean result of one student on the exam
-            self.teacher.receive_result(Result(0, 0, None, idStudent=student.id, isExam=False), reward=mean_mark)
+
 
         return np.mean(mean_results), -1
 

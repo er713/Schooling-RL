@@ -9,15 +9,5 @@ import numpy as np
 
 if __name__ == '__main__':
    
-    c = Classroom(7, TeacherActorCritic, RashStudent, nStudents=30, gamma=0.99, nLast=5, learning_rate=0.05,
-                  verbose=False, end_random_iteration=10)
-    c.run(timeToExam=50, numberOfIteration=15, saveResults=False, visualiseResults=True, savePlot=False)
-
-    ch: np.ndarray = c.teacher.choices
-    print(ch.mean(), ch.std())
-    print(ch)
-    # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
-    # print(res[0].mark, res[0].isExam)
-
-    # Plotter.plot_from_csv('./data/RandomTeacher/RashStudent__100_7__2021-10-31_2-40.csv',
-    #                       './data/RandomTeacher/RashStudent__100_7__2021-10-31_2-40.png')
+    c = Classroom(1, RandomTeacher, RashStudent, nStudents=100)
+    c.run(timeToExam=6, numberOfIteration=100, saveResults=False, visualiseResults=True, savePlot=False)
