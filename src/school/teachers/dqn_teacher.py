@@ -13,17 +13,18 @@ from random import random, randint
 
 class DQNTeacher(Teacher):
     """Deep Q-learning agent."""
-    def __init__(self, nSkills: int, tasks: List[Task], batchSize: int, timeToExam=-1, noExamTasks=-1, **kwargs):
+    def __init__(self, nSkills: int, tasks: List[Task], batchSize: int = 100, timeToExam=-1, noExamTasks=-1, **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, **kwargs)
-        self.memSize = 500
+        self.memSize = 300
         self.noTargetIte = 2000
-        self.noLearnIte = 200
-        self.epsilon=0.1
+        self.noLearnIte = 100
+        self.epsilon=0.2
         self.batchSize = batchSize
         self.lossFun = dqn_loss
-        self.estimator = DQN(len(tasks))
-        self.targetEstimator = DQN(len(tasks))
+        modelInputSize=len(tasks)*2
+        self.estimator = DQN(modelInputSize)
+        self.targetEstimator = DQN(modelInputSize)
         self.studentsStates = {}
         self.studentsPrevState = {}
         self.beforeExamTasks = {}
@@ -35,6 +36,7 @@ class DQNTeacher(Teacher):
         self.timeToExam=timeToExam
         self.noTasks= len(tasks)
         self.noExamTasks = noExamTasks
+        self.memFull=False
         self.__examResults={}
         self.__statesBuff=[]*self.batchSize
         self.__actionsBuff=[]*self.batchSize
@@ -49,13 +51,13 @@ class DQNTeacher(Teacher):
         if random() > self.epsilon:
             studentState = tf.expand_dims(tf.constant(self.studentsStates[student.id]), axis=0)
             actionsValues = self.estimator(studentState)[0]
-            chosenTaskId = tf.argmax(actionsValues)
+            chosenTaskId = tf.argmax(actionsValues).numpy()
         # exploration
         else:
-            chosenTaskId = randint(0, self.noTasks)
+            chosenTaskId = randint(0, self.noTasks-1)
         return chosenTaskId
 
-    def receive_result(self, result, last=False) -> None:
+    def receive_result(self, result, last=False, reward=None) -> None:
         # Exam results need to be reduced in receive_exam_res
         if result.isExam:
             self.__receive_exam_res(result)
@@ -68,7 +70,7 @@ class DQNTeacher(Teacher):
         # copy estimator weights to target estimator after noTargetIte iterations
         self.__update_target()
         # train estimator with batch generated from memory
-        if self.learnCounter == self.noLearnIte:
+        if self.learnCounter == self.noLearnIte and self.memFull:
             batch_tuple=self.__get_batch_tuple()
             self.estimator.train_step(*batch_tuple)
 
@@ -185,6 +187,9 @@ class DQNTeacher(Teacher):
         if last and not result.isExam:
             self.__examResults[result.idStudent] = ExamResultsRecord(state, action)
             return
+        # set flag that memory has been fully filled
+        if self.memIdx==self.memSize-1:
+            self.memFull=True
         # increment memory idx and select updated record
         self.memIdx = (self.memIdx + 1) % self.memSize
         updatedMemRecord = self.mem[self.memIdx]

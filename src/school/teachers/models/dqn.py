@@ -1,8 +1,6 @@
 import tensorflow as tf
-from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from ..losses.dqn_loss import dqn_loss
-from ..utils.dqn_structs import BatchRecord
 
 
 class DQN(tf.keras.Model):
@@ -15,7 +13,7 @@ class DQN(tf.keras.Model):
         self.model = tf.keras.Sequential([
             Dense(3 * inputSize, activation='relu', input_shape=(None, inputSize)),
             Dense(2 * inputSize, activation='relu'),
-            Dense(inputSize)
+            Dense(inputSize/2)
         ])
 
     #@tf.function
@@ -24,8 +22,9 @@ class DQN(tf.keras.Model):
         return self.model(inputs, training=training)
 
     def copy_weights(self, otherModel):
-        for idx, layer in enumerate(otherModel.layers):
-            weights = otherModel.layers.get_weights()
+        model=otherModel.model
+        for idx, layer in enumerate(model.layers):
+            weights = layer.get_weights()
             self.model.layers[idx].set_weights(weights)
 
     #@tf.function
