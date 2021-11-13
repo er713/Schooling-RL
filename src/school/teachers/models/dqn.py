@@ -11,13 +11,14 @@ class DQN(tf.keras.Model):
         self.loss = dqn_loss()
 
         self.model = tf.keras.Sequential([
-            Dense(3 * inputSize, activation='relu', input_shape=(None, inputSize)),
+            Dense(3 * inputSize, activation='relu', input_shape=(inputSize,)),
             Dense(2 * inputSize, activation='relu'),
             Dense(inputSize/2)
         ])
 
-    #@tf.function
+    @tf.function
     def call(self, inputs, training):
+        print("Retracing calla")
         """ Given a state, return Q values of actions"""
         return self.model(inputs, training=training)
 
@@ -27,8 +28,9 @@ class DQN(tf.keras.Model):
             weights = layer.get_weights()
             self.model.layers[idx].set_weights(weights)
 
-    #@tf.function
+    @tf.function
     def train_step(self, states, actions, realQs):
+        print("Retracing train_stepa")
         with tf.GradientTape() as tape:
             qPred=self(states, training=True)
             qPred=tf.gather_nd(qPred, actions)
