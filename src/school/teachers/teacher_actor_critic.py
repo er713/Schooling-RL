@@ -50,12 +50,13 @@ class TeacherActorCritic(Teacher):
         # print("Results: ",student_results)
         state = []
         for result in student_results:
+            state.append(result.mark)
             tmp = [0.] * self.nTasks
             tmp[result.task.id] = 1.
-            [state.append(t) for t in tmp]
+            [state.append(t) for t in tmp[::-1]]
             # state.append(result.task.id)
             # state.append(list(result.task.taskDifficulties.keys())[0])
-            state.append(result.mark)
+        state = state[::-1]  # Change positions to ensure order where first is the most recent one
         while len(state) < self.nLast * (self.nTasks + 1):
             [state.append(0.0) for _ in
              range(self.nTasks)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
