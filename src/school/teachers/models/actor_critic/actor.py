@@ -4,8 +4,8 @@ import numpy as np
 
 class Actor(tf.keras.Model):
 
-    def __init__(self, nTasks: int, verbose: bool = False):
-        super().__init__()
+    def __init__(self, nTasks: int, verbose: bool = False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.verbose = verbose
         self.model = tf.keras.Sequential([
             tf.keras.layers.Dense(units=30, activation=tf.nn.relu),

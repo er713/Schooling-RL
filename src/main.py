@@ -10,8 +10,8 @@ import numpy as np
 if __name__ == '__main__':
    
     c = Classroom(1, TeacherActorCritic, RashStudent, nStudents=100, gamma=0.99, nLast=5, learning_rate=0.05,
-                  verbose=False, end_random_iteration=10)
-    c.run(timeToExam=10, numberOfIteration=15, saveResults=False, visualiseResults=True, savePlot=False)
+                  verbose=False, start_of_random_iteration=10, number_of_random_iteration=5, cnn=True)
+    c.run(timeToExam=10, numberOfIteration=20, saveResults=False, visualiseResults=True, savePlot=False)
 
     ch: np.ndarray = c.teacher.choices
     print(ch.mean(), ch.std())

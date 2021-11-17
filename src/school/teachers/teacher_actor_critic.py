@@ -11,12 +11,17 @@ from .models.actor_critic import *
 
 
 class TeacherActorCritic(Teacher):
-    def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int,
-                 verbose: bool = False, epsilon: float = 90, end_random_iteration=35, **kwargs):
+    def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int, cnn: bool = False,
+                 verbose: bool = False, epsilon: float = 90, start_of_random_iteration=50,
+                 number_of_random_iteration=50, end_epsilon=0, *args, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
         self.nTasks = len(tasks)
-        self.actor = Actor(self.nTasks, verbose=verbose)
-        self.critic = Critic()
+        if not cnn:
+            self.actor = Actor(self.nTasks, verbose=verbose)
+            self.critic = Critic()
+        else:
+            self.actor = ActorCNN(self.nTasks, verbose=verbose, nLast=nLast)
+            self.critic = CriticCNN(nTasks=self.nTasks, nLast=nLast)
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.gamma = gamma
@@ -25,7 +30,11 @@ class TeacherActorCritic(Teacher):
         self.epsilon = epsilon
         self.results = dict()
         # self.random_action = True
-        self.epsilon_diff = epsilon / end_random_iteration
+        self.iteration = 0
+        self.start_of_random_iteration = start_of_random_iteration
+        self.number_of_random_iteration = number_of_random_iteration
+        self.end_epsilon = end_epsilon
+        self.epsilon_diff = (epsilon - end_epsilon) / number_of_random_iteration
 
         self.choices = np.zeros((len(self.tasks),), dtype=np.int_)  # Only for checking if action is diverse
 
@@ -64,7 +73,6 @@ class TeacherActorCritic(Teacher):
             logits = self.actor(state)
             action_probabilities = tfp.distributions.Categorical(logits=logits)
             action = action_probabilities.sample(sample_shape=())
-            print(action_probabilities.sample(sample_shape=(5,)))
             self.choices[action.numpy()[0]] += 1
             # print(action.numpy()[0])
             # self.random_action = False
@@ -89,8 +97,11 @@ class TeacherActorCritic(Teacher):
             self._learn(self._get_state(student, shift=1), self.results[student][-1].task.id,
                         self._get_state(student), reward, done)
             if reward > 0:
+                self.iteration += 1
                 self.results[student] = []  # remove student history after exam
-                self.epsilon -= 0.5
+                if self.start_of_random_iteration < self.iteration < (
+                        self.start_of_random_iteration + self.number_of_random_iteration):
+                    self.epsilon -= self.epsilon_diff
 
     """
     Mając state wykonaj akcje a, zaobserwuj nagrodę reward i następnik next_state
