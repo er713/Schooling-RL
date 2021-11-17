@@ -6,9 +6,9 @@ class Critic(tf.keras.Model):
     def __init__(self):
         super().__init__()
         self.model = tf.keras.Sequential([
-            tf.keras.layers.Dense(units=100, activation='relu'),
-            tf.keras.layers.Dense(units=100, activation='relu'),
-            tf.keras.layers.Dense(units=100, activation='relu'),
+            tf.keras.layers.Dense(units=30, activation='relu'),
+            tf.keras.layers.Dense(units=50, activation='relu'),
+            tf.keras.layers.Dense(units=50, activation='relu'),
             tf.keras.layers.Dense(units=1, activation='relu')
         ])
 

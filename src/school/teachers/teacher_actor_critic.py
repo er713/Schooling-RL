@@ -14,7 +14,8 @@ class TeacherActorCritic(Teacher):
     def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int,
                  verbose: bool = False, epsilon: float = 90, end_random_iteration=35, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
-        self.actor = Actor(len(tasks), verbose=verbose)
+        self.nTasks = len(tasks)
+        self.actor = Actor(self.nTasks, verbose=verbose)
         self.critic = Critic()
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
@@ -24,7 +25,7 @@ class TeacherActorCritic(Teacher):
         self.epsilon = epsilon
         self.results = dict()
         # self.random_action = True
-        self.epsilon_diff = epsilon/end_random_iteration
+        self.epsilon_diff = epsilon / end_random_iteration
 
         self.choices = np.zeros((len(self.tasks),), dtype=np.int_)  # Only for checking if action is diverse
 
@@ -40,16 +41,19 @@ class TeacherActorCritic(Teacher):
         # print("Results: ",student_results)
         state = []
         for result in student_results:
-            state.append(result.task.id)
-            state.append(list(result.task.taskDifficulties.keys())[0])
+            tmp = [0.] * self.nTasks
+            tmp[result.task.id] = 1.
+            [state.append(t) for t in tmp]
+            # state.append(result.task.id)
+            # state.append(list(result.task.taskDifficulties.keys())[0])
             state.append(result.mark)
-        while len(state) < self.nLast * 3:
-            [state.append(-10) for _ in
-             range(2)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
+        while len(state) < self.nLast * (self.nTasks + 1):
+            [state.append(0.0) for _ in
+             range(self.nTasks)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
             state.append(0)
 
         # print("State: ",state)
-        return tf.reshape(tf.convert_to_tensor(state), [1, self.nLast * 3])
+        return tf.reshape(tf.convert_to_tensor(state), [1, self.nLast * (self.nTasks + 1)])
 
     def choose_task(self, student) -> Task:
         if choice(range(100)) < self.epsilon:
