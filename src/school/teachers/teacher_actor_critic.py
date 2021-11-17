@@ -64,6 +64,7 @@ class TeacherActorCritic(Teacher):
             logits = self.actor(state)
             action_probabilities = tfp.distributions.Categorical(logits=logits)
             action = action_probabilities.sample(sample_shape=())
+            print(action_probabilities.sample(sample_shape=(5,)))
             self.choices[action.numpy()[0]] += 1
             # print(action.numpy()[0])
             # self.random_action = False

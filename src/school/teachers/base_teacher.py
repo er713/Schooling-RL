@@ -37,7 +37,9 @@ class BaseTeacher(Teacher):
                 continue
         return best_task
 
-    def receive_result(self, result, reward=None) -> None:
+    def receive_result(self, result, reward=None, last=False) -> None:
+        if result.task is None:
+            return
         baseProfScaler = 0.1
         baseDiffScaler = 0.01
         unknownTask = False
