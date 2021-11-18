@@ -17,6 +17,7 @@ class ActorCNN(tf.keras.Model):
             Dense(units=nTasks)
         ])
 
+    @tf.function
     def call(self, state):
         if self.verbose:
             print("State: ", state)

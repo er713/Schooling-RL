@@ -14,6 +14,7 @@ class Actor(tf.keras.Model):
             tf.keras.layers.Dense(units=nTasks)
         ])
 
+    @tf.function
     def call(self, state):
         if self.verbose:
             print("State: ", state)

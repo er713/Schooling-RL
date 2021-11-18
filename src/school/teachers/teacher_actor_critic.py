@@ -38,7 +38,8 @@ class TeacherActorCritic(Teacher):
 
         self.choices = np.zeros((len(self.tasks),), dtype=np.int_)  # Only for checking if action is diverse
 
-    def _get_state(self, idStudent: int, shift: int = 0) -> List[int]:
+    @tf.function
+    def _get_state(self, idStudent: int, shift: int = 0) -> tf.Tensor:
         """
         Function for getting state out of history (self.results) for specified student.
         :param idStudent: Student ID
@@ -108,6 +109,7 @@ class TeacherActorCritic(Teacher):
     Mając state wykonaj akcje a, zaobserwuj nagrodę reward i następnik next_state
     """
 
+    @tf.function
     def _learn(self, state: List[int], action: int, next_state: List[int], reward: int, done: int) -> None:
         """
         Dokumentacja
@@ -117,7 +119,8 @@ class TeacherActorCritic(Teacher):
             q_next = self.critic(next_state)
             logits = self.actor(state)
 
-            δ = reward + self.gamma * q_next * (1 - done) - q
+            # δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
+            δ = float(reward) + float(self.gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
 
             actor_loss = losses.actor_loss(logits, action, δ)
             critic_loss = δ ** 2  # MSE?
