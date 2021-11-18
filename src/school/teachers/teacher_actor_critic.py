@@ -13,9 +13,10 @@ from .models.actor_critic import *
 class TeacherActorCritic(Teacher):
     def __init__(self, nSkills: int, tasks: List[Task], gamma: float, nLast: int, learning_rate: int, cnn: bool = False,
                  verbose: bool = False, epsilon: float = 90, start_of_random_iteration=50,
-                 number_of_random_iteration=50, end_epsilon=0, *args, **kwargs):
+                 number_of_random_iteration=50, end_epsilon=0, inverse_state=True, *args, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
         self.nTasks = len(tasks)
+
         if not cnn:
             self.actor = Actor(self.nTasks, verbose=verbose)
             self.critic = Critic()
@@ -24,10 +25,12 @@ class TeacherActorCritic(Teacher):
             self.critic = CriticCNN(nTasks=self.nTasks, nLast=nLast)
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
         self.gamma = gamma
         self.nLast = nLast
         self.verbose = verbose
         self.epsilon = epsilon
+
         self.results = dict()
         # self.random_action = True
         self.iteration = 0
@@ -36,10 +39,15 @@ class TeacherActorCritic(Teacher):
         self.end_epsilon = end_epsilon
         self.epsilon_diff = (epsilon - end_epsilon) / number_of_random_iteration
 
+        if inverse_state:
+            self._get_state = self._get_state_inverse
+        else:
+            self._get_state = self._get_state_normal
+
         self.choices = np.zeros((len(self.tasks),), dtype=np.int_)  # Only for checking if action is diverse
 
     @tf.function
-    def _get_state(self, idStudent: int, shift: int = 0) -> tf.Tensor:
+    def _get_state_inverse(self, idStudent: int, shift: int = 0) -> tf.Tensor:
         """
         Function for getting state out of history (self.results) for specified student.
         :param idStudent: Student ID
@@ -58,6 +66,33 @@ class TeacherActorCritic(Teacher):
             # state.append(result.task.id)
             # state.append(list(result.task.taskDifficulties.keys())[0])
         state = state[::-1]  # Change positions to ensure order where first is the most recent one
+        while len(state) < self.nLast * (self.nTasks + 1):
+            [state.append(0.0) for _ in
+             range(self.nTasks)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
+            state.append(0)
+
+        # print("State: ",state)
+        return tf.reshape(tf.convert_to_tensor(state), [1, self.nLast * (self.nTasks + 1)])
+
+    @tf.function
+    def _get_state_normal(self, idStudent: int, shift: int = 0) -> tf.Tensor:
+        """
+        Function for getting state out of history (self.results) for specified student.
+        :param idStudent: Student ID
+        :param shift: Shift to the past/how many recent Results skip. Has to be positive.
+        :return: State - list of int/float of shape 3*self.nLast
+        """
+        one_student = self.results.get(idStudent, [])
+        student_results = one_student[-(self.nLast + shift):(len(one_student) - shift)]
+        # print("Results: ",student_results)
+        state = []
+        for result in student_results:
+            tmp = [0.] * self.nTasks
+            tmp[result.task.id] = 1.
+            [state.append(t) for t in tmp[::-1]]
+            state.append(result.mark)
+            # state.append(result.task.id)
+            # state.append(list(result.task.taskDifficulties.keys())[0])
         while len(state) < self.nLast * (self.nTasks + 1):
             [state.append(0.0) for _ in
              range(self.nTasks)]  # TODO: ustalić co będzie pustym elementem/do wypełnienia brakujących wartości
