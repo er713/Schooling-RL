@@ -37,6 +37,7 @@ class Classroom:
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
 
+        Task.reset_index()
         if tasksSkillsDifficulties is None:  # Default task, for each skill, difficulties in [-3, 3]
             tasksSkillsDifficulties = []
             for skill in range(nSkills):
