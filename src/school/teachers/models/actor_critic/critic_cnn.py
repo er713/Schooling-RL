@@ -16,6 +16,7 @@ class CriticCNN(tf.keras.Model):
             Dense(units=1, activation='relu')
         ])
 
+    @tf.function
     def call(self, state):
         # tf.reshape(state, (1, (self.nTasks+1), ))
         return self.model(state)

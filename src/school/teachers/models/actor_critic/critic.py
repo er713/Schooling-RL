@@ -12,5 +12,6 @@ class Critic(tf.keras.Model):
             tf.keras.layers.Dense(units=1, activation='relu')
         ])
 
+    @tf.function
     def call(self, state):
         return self.model(state)
