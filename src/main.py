@@ -9,7 +9,7 @@ import numpy as np
 
 if __name__ == '__main__':
     timeToExam = 10
-    c = Classroom(1, DQNTeacher, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=0.99, nLast=5, learning_rate=0.05,
+    c = Classroom(1, RandomTeacher, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=0.99, nLast=5, learning_rate=0.05,
                   verbose=False, start_of_random_iteration=10, number_of_random_iteration=5, cnn=True)
     c.run(timeToExam=timeToExam, numberOfIteration=20, saveResults=False, visualiseResults=True, savePlot=False)
 
