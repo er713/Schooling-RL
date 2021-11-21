@@ -60,7 +60,7 @@ class DQNTeacher(Teacher):
         # exploration
         else:
             chosenTaskId = randint(0, self.noTasks - 1)
-        return chosenTaskId
+        return [task_ for task_ in self.tasks if task_.id == chosenTaskId][0]
 
     def receive_result(self, result, last=False, reward=None) -> None:
         if result.task is None:  # Added cause my stupid changes in Classroom

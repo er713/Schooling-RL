@@ -37,7 +37,7 @@ class Classroom:
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
 
-        Task.reset_index()
+        Task.reset_index()  # For multiple sequential runs, e.g. on colab
         if tasksSkillsDifficulties is None:  # Default task, for each skill, difficulties in [-3, 3]
             tasksSkillsDifficulties = []
             for skill in range(nSkills):
