@@ -57,7 +57,7 @@ class Classroom:
         self.students: List[Student] = []  # Generated during learning_process method
         self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, **kwargs)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills, **kwargs)
 
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber
@@ -116,7 +116,8 @@ class Classroom:
         :param isExam: If Task is part of exam.
         """
         if student.want_task():
-            result = student.solve_task(self.teacher.choose_task(student), isExam=isExam)
+            task = self.teacher.choose_task(student)
+            result = student.solve_task(task, isExam=isExam)
             self.results.append(result)
             self.teacher.receive_result(result, last=last)
 

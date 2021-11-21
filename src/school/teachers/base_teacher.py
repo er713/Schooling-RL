@@ -35,11 +35,12 @@ class BaseTeacher(Teacher):
                     best_task = task
             else:
                 continue
-        return best_task
+        return [task_ for task_ in self.tasks if task_.id == best_task.id][0]
 
-    def receive_result(self, result, reward=None, last=False) -> None:
-        if result.task is None:
+    def receive_result(self, result, reward=None, last=None) -> None:
+        if result.task is None:  # Added cause my stupid changes in Classroom
             return
+
         baseProfScaler = 0.1
         baseDiffScaler = 0.01
         unknownTask = False

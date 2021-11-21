@@ -10,7 +10,7 @@ class ActorCNN(tf.keras.Model):
         self.verbose = verbose
         self.model = tf.keras.Sequential([
             Reshape(((nTasks + 1) * nLast, 1), input_shape=((nTasks + 1) * nLast,)),
-            Conv1D(filters=1, kernel_size=(nTasks + 1), strides=(nTasks + 1), activation=tf.nn.relu),
+            Conv1D(filters=3, kernel_size=(nTasks + 1), strides=(nTasks + 1), activation=tf.nn.relu),
             Flatten(),
             Dense(units=50, activation=tf.nn.relu),
             Dense(units=50, activation=tf.nn.relu),
