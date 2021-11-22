@@ -63,9 +63,6 @@ class DQNTeacher(Teacher):
         return [task_ for task_ in self.tasks if task_.id == chosenTaskId][0]
 
     def receive_result(self, result, last=False, reward=None) -> None:
-        if result.task is None:  # Added cause my stupid changes in Classroom
-            return
-
         # Exam results need to be reduced in receive_exam_res
         if result.isExam:
             self.__receive_exam_res(result)
