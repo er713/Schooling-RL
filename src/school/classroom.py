@@ -57,7 +57,8 @@ class Classroom:
         self.students: List[Student] = []  # Generated during learning_process method
         self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills, **kwargs)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills,
+                                             nStudents=nStudents, **kwargs)
 
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber
