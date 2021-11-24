@@ -13,8 +13,8 @@ class RandomTeacher(Teacher):
     def choose_task(self, student) -> Task:
         return random.choice(self.tasks)
 
-    def receive_result(self, result) -> None:
+    def receive_result(self, result, reward=None, last=False) -> None:
         pass
 
-    def __str__(self):
-        return 'RandomTeacher'
+    # def __str__(self):
+    #     return 'RandomTeacher'

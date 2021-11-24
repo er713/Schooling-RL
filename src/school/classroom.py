@@ -37,6 +37,7 @@ class Classroom:
         assert issubclass(teacherModel, Teacher)
         assert issubclass(studentModel, Student)
 
+        Task.reset_index()  # For multiple sequential runs, e.g. on colab
         if tasksSkillsDifficulties is None:  # Default task, for each skill, difficulties in [-3, 3]
             tasksSkillsDifficulties = []
             for skill in range(nSkills):
@@ -56,7 +57,7 @@ class Classroom:
         self.students: List[Student] = []  # Generated during learning_process method
         self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, **kwargs)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills, **kwargs)
 
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber
@@ -89,7 +90,7 @@ class Classroom:
         """
         student = self.students[np.random.randint(0, len(self.students), 1)[0]]
         for time in range(timeToExam):
-            self._learn_student(student)
+            self._learn_student(student, last=(time == timeToExam - 1))
 
     def _learning_loop_all_student(self, timeToExam: int) -> None:
         """
@@ -97,7 +98,7 @@ class Classroom:
         """
         for student in self.students:
             for time in range(timeToExam):
-                self._learn_student(student)
+                self._learn_student(student, last=(time == timeToExam - 1))
 
     def _learning_loop_all_student_parallel(self, timeToExam: int) -> None:
         """
@@ -106,33 +107,39 @@ class Classroom:
         for time in range(timeToExam):
             random.shuffle(self.students)
             for student in self.students:
-                self._learn_student(student)
+                self._learn_student(student, last=(time == timeToExam - 1))
 
-    def _learn_student(self, student: Student, isExam: bool = False) -> None:
+    def _learn_student(self, student: Student, isExam: bool = False, last: bool = False) -> None:
         """
         Assistant function for giving one Task to specified Student.
         :param student: Student to learn.
         :param isExam: If Task is part of exam.
         """
         if student.want_task():
-            result = student.solve_task(self.teacher.choose_task(student), isExam=isExam)
+            task = self.teacher.choose_task(student)
+            result = student.solve_task(task, isExam=isExam)
             self.results.append(result)
-            self.teacher.receive_result(result)
+            self.teacher.receive_result(result, last=last)
 
     def make_exam(self, examTasks: List[Task]) -> (float, float):
         """
         Function responsible for evaluation process
         :param examTasks: List of Tasks.
         """
-        results = []
+        mean_results = []
         for student in self.students:
+            results = []
             for task in examTasks:
                 res = student.solve_task(task, True)
                 self.results.append(res)
                 self.teacher.receive_result(res)
                 results.append(res)
+            mean_mark, _ = Result.get_mean_result(results)
+            mean_results.append(mean_mark)
+            # Give teacher reward - mean result of one student on the exam
+            self.teacher.receive_result(Result(0, 0, None, idStudent=student.id, isExam=False), reward=mean_mark)
 
-        return Result.get_mean_result(results)
+        return np.mean(mean_results), -1
 
     def run(self, timeToExam: int, learningType: str = 'all-one-by-one', minimalImprove: Tuple[int, float] = None,
             minimalThreshold: Tuple[int, float] = None, numberOfIteration: int = 1, visualiseResults: bool = True,
