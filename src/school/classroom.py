@@ -7,7 +7,7 @@ from datetime import datetime
 
 from . import Task, Result, Plotter, import_results, export_results
 from .students import Student
-from .teachers import Teacher
+from .teachers import Teacher, TeacherNLastHistory
 
 
 class Classroom:
@@ -57,7 +57,8 @@ class Classroom:
         self.students: List[Student] = []  # Generated during learning_process method
         self.tasks: List[Task] = self._generate_tasks(tasksSkillsDifficulties)
 
-        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills, **kwargs)
+        self.teacher: Teacher = teacherModel(self.nSkills, self.tasks, noExamTasks=2 * self.nSkills,
+                                             nStudents=nStudents, **kwargs)
 
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber
@@ -137,7 +138,8 @@ class Classroom:
             mean_mark, _ = Result.get_mean_result(results)
             mean_results.append(mean_mark)
             # Give teacher reward - mean result of one student on the exam
-            self.teacher.receive_result(Result(0, 0, None, idStudent=student.id, isExam=False), reward=mean_mark)
+            if issubclass(self.teacher.__class__, TeacherNLastHistory):
+                self.teacher.receive_result(Result(0, 0, None, idStudent=student.id, isExam=False), reward=mean_mark)
 
         return np.mean(mean_results), -1
 

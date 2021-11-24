@@ -11,14 +11,14 @@ class ExamResultsRecord(Record):
 
     def __init__(self, state: List[float] = None, action: int = None):
         super(ExamResultsRecord, self).__init__(state, action)
-        self.noAcquiredExamResults=0
-        self.marksSum=0
+        self.noAcquiredExamResults = 0
+        self.marksSum = 0
 
     def clear(self):
-        self.state=None
-        self.action=None
-        self.noAcquiredExamResults=0
-        self.marksSum=0
+        self.state = None
+        self.action = None
+        self.noAcquiredExamResults = 0
+        self.marksSum = 0
 
 
 class MemoryRecord(Record):

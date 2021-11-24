@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import *
+from ...layers import NLastHistoryCNN
 
 
 class CriticCNN(tf.keras.Model):
@@ -8,9 +9,7 @@ class CriticCNN(tf.keras.Model):
         super().__init__(*args, **kwargs)
         # self.nTasks = nTasks
         self.model = tf.keras.Sequential([
-            Reshape(((nTasks+1)*nLast, 1), input_shape=((nTasks+1)*nLast, )),
-            Conv1D(filters=3, kernel_size=(nTasks + 1), strides=(nTasks + 1), activation=tf.nn.relu),
-            Flatten(),
+            NLastHistoryCNN(nTasks, nLast),
             Dense(units=50, activation='relu'),
             Dense(units=30, activation='relu'),
             Dense(units=1, activation='relu')

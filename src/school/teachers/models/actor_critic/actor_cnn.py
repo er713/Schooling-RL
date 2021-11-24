@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import *
+from ...layers import NLastHistoryCNN
 
 
 class ActorCNN(tf.keras.Model):
@@ -9,9 +10,7 @@ class ActorCNN(tf.keras.Model):
         assert nLast is not None
         self.verbose = verbose
         self.model = tf.keras.Sequential([
-            Reshape(((nTasks + 1) * nLast, 1), input_shape=((nTasks + 1) * nLast,)),
-            Conv1D(filters=3, kernel_size=(nTasks + 1), strides=(nTasks + 1), activation=tf.nn.relu),
-            Flatten(),
+            NLastHistoryCNN(nTasks, nLast),
             Dense(units=50, activation=tf.nn.relu),
             Dense(units=50, activation=tf.nn.relu),
             Dense(units=nTasks)
