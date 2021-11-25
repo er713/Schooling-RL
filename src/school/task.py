@@ -50,6 +50,9 @@ class Task:
     def __deepcopy__(self, memo):
         return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)
 
+    def __str__(self):
+        return f'taskID: {str(self.id)}, difficulties : {str(list(self.taskDifficulties.items()))}'
+
     @staticmethod
     def reset_index():
         Task._id = 0
