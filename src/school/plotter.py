@@ -59,6 +59,7 @@ class Plotter:
         labels = []
         for file in files:
             file_path = copy.deepcopy(file)
+            results.append(Result.get_exams_means(import_results(file)))
             file = file.replace("./data/", "", 1)
 
             teacher = re.match("^[a-zA-Z]+", file)
@@ -110,6 +111,11 @@ class Plotter:
 
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
+
+            labels.append(f"{teacher[0]}-{skills[0]}-{int(tasks[0])/int(skills[0])}")
+
+
+        Plotter.__plot__mutiple(results, save_path, labels)
 
 
     @staticmethod
