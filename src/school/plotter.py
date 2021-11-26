@@ -1,6 +1,7 @@
 from typing import List, Optional
 import matplotlib.pyplot as plt
 import os
+import re
 from . import import_results, Result
 
 
@@ -44,6 +45,39 @@ class Plotter:
         """
         results = import_results(path)
         Plotter.plot_results(Result.get_exams_means(results), save_path)
+
+    @staticmethod
+    def plot_multiple_from_csv(files: List[str], save_path: str = None):
+        """
+        Function responsible for plot results from multiple .csv files on one plot
+        :param files: paths to .csv files
+        :param str save_path: Path where user want save plot.
+        """
+        results = []
+        labels = []
+        for file in files:
+            results.append(Result.get_exams_means(import_results(file)))
+            file = file.replace("./data/", "", 1)
+
+            teacher = re.match("^[a-zA-Z]+", file)
+            file = file.replace(f"{teacher[0]}/", "", 1)
+
+            student = re.match("^[a-zA-Z]+", file)
+            file = file.replace(f"{student[0]}__", "", 1)
+
+            nStudents = re.match("^[0-9]+", file)
+            file = file.replace(f"{nStudents[0]}_", "", 1)
+
+            skills = re.match("^[0-9]+", file)
+            file = file.replace(f"{skills[0]}__", "", 1)
+
+            tasks = re.match("^[0-9]+", file)
+
+            labels.append(f"{teacher[0]}-{skills[0]}-{int(tasks[0])/int(skills[0])}")
+
+
+        Plotter.__plot__mutiple(results, save_path, labels)
+
 
     @staticmethod
     def plot_compare_results(results_path: List[str],
@@ -110,6 +144,23 @@ class Plotter:
         plt.xlabel('Numer egzaminu')
         plt.ylabel('Średni wynik studentów na egzaminie')
         plt.title('Wykres zdobytych nagród w czasie')
+        plt.show()
+
+        if save_path:
+            fig.savefig(save_path, dpi=fig.dpi)
+
+    @staticmethod
+    def __plot__mutiple(results: List[List[float]] = [[]], save_path: str = None, labels: List[str] = None):
+        print("xd")
+        fig = plt.figure()
+        for result, label in zip(results,labels):
+            plt.plot(range(len(result)), result, label=label)
+
+        plt.ylim([0., 1.])
+        plt.xlabel('Numer egzaminu')
+        plt.ylabel('Średni wynik studentów na egzaminie')
+        plt.title('Wykres zdobytych nagród w czasie')
+        plt.legend()
         plt.show()
 
         if save_path:
