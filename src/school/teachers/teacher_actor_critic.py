@@ -93,13 +93,13 @@ class TeacherActorCritic(TeacherNLastHistory):
     """
 
     def _learn(self, state: List[int], action: int, next_state: List[int], reward: int, done: int) -> None:
-        _learn_main(self.actor, self.critic, state, action, next_state, reward, done, self.gamma, self.actor_opt,
-                    self.critic_opt)
+        _learn_main(self.actor, self.critic, state, tf.constant(action), next_state, tf.constant(reward, dtype=tf.float32),
+                    tf.constant(done, dtype=tf.float32), tf.constant(self.gamma, dtype=tf.float32), self.actor_opt, self.critic_opt)
 
 
 @tf.function
-def _learn_main(actor: tf.keras.Model, critic: tf.keras.Model, state: List[int], action: int, next_state: List[int],
-                reward: int, done: int, gamma: float, actor_opt, critic_opt) -> None:
+def _learn_main(actor: tf.keras.Model, critic: tf.keras.Model, state: tf.Tensor, action: tf.Tensor, next_state: tf.Tensor,
+                reward: tf.Tensor, done: tf.Tensor, gamma: tf.Tensor, actor_opt, critic_opt) -> None:
     """
     Dokumentacja
     """
@@ -108,8 +108,8 @@ def _learn_main(actor: tf.keras.Model, critic: tf.keras.Model, state: List[int],
         q_next = critic(next_state)
         logits = actor(state)
 
-        # δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
-        δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
+        δ = reward + gamma * q_next * (1 - done) - q  # this works w/o tf.function
+        # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
 
         actor_loss = losses.actor_loss(logits, action, δ)
         critic_loss = δ ** 2  # MSE?
