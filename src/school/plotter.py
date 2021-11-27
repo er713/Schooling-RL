@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 import os
 import re
 import copy
-import numpy as np
 from . import import_results, Result
-
+import numpy as np
 
 class Plotter:
     """
@@ -112,10 +111,8 @@ class Plotter:
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
 
-            labels.append(f"{teacher[0]}-{skills[0]}-{int(tasks[0])/int(skills[0])}")
+        Plotter.__plot_multiple(results, save_path, labels)
 
-
-        Plotter.__plot__mutiple(results, save_path, labels)
 
 
     @staticmethod
