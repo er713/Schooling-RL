@@ -2,6 +2,7 @@ from typing import List, Optional
 import matplotlib.pyplot as plt
 import os
 import re
+import copy
 from . import import_results, Result
 
 
@@ -47,7 +48,7 @@ class Plotter:
         Plotter.plot_results(Result.get_exams_means(results), save_path)
 
     @staticmethod
-    def plot_multiple_from_csv(files: List[str], save_path: str = None):
+    def plot_multiple_from_csv(files: List[str], save_path: str = None, nSkills: int = None):
         """
         Function responsible for plot results from multiple .csv files on one plot
         :param files: paths to .csv files
@@ -56,7 +57,7 @@ class Plotter:
         results = []
         labels = []
         for file in files:
-            results.append(Result.get_exams_means(import_results(file)))
+            file_path = copy.deepcopy(file)
             file = file.replace("./data/", "", 1)
 
             teacher = re.match("^[a-zA-Z]+", file)
@@ -72,11 +73,12 @@ class Plotter:
             file = file.replace(f"{skills[0]}__", "", 1)
 
             tasks = re.match("^[0-9]+", file)
+            if nSkills == int(skills[0]):
+                labels.append(f"{teacher[0]}-{skills[0]}-{int(int(tasks[0])/int(skills[0]))}")
+                results.append(Result.get_exams_means(import_results(file_path)))
 
-            labels.append(f"{teacher[0]}-{skills[0]}-{int(tasks[0])/int(skills[0])}")
+        Plotter.__plot_multiple(results, save_path, labels)
 
-
-        Plotter.__plot__mutiple(results, save_path, labels)
 
 
     @staticmethod
@@ -150,8 +152,8 @@ class Plotter:
             fig.savefig(save_path, dpi=fig.dpi)
 
     @staticmethod
-    def __plot__mutiple(results: List[List[float]] = [[]], save_path: str = None, labels: List[str] = None):
-        print("xd")
+    def __plot_multiple(results: List[List[float]] = [[]], save_path: str = None, labels: List[str] = None):
+
         fig = plt.figure()
         for result, label in zip(results,labels):
             plt.plot(range(len(result)), result, label=label)
@@ -165,3 +167,4 @@ class Plotter:
 
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
+        plt.close()
