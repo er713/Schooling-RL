@@ -1,6 +1,7 @@
 from typing import List, Optional
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 from . import import_results, Result
 
 
@@ -114,3 +115,12 @@ class Plotter:
 
         if save_path:
             fig.savefig(save_path, dpi=fig.dpi)
+    
+    def dump_results_to_csv(self,
+                        save_path: str = None) -> None:
+        """
+        Function responsible for save results to csv file
+        :param: str save_path: Path where user want save csv file
+        """
+        np.savetxt(save_path,self.results)
+        
