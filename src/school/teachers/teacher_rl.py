@@ -36,7 +36,7 @@ class TeacherRL(Teacher):
         self.epsilon = max(self.min_eps, self.epsilon * self.decay_epsilon)
     
     @abstractmethod
-    def get_state(self):
+    def get_state(self, student):
         raise NotImplementedError('get_state was not implemented')
 
     @abstractmethod
