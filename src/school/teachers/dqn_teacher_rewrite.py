@@ -14,7 +14,7 @@ from random import random, randint
 class DQNTeacher(TableTeacher):
     """Deep Q-learning agent."""
 
-    def __init__(self, nSkills: int, tasks: List[Task], mem_size=1024, batch_size=64 ,
+    def __init__(self, nSkills: int, tasks: List[Task], mem_size=4096, batch_size=1024,
                  **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, **kwargs)
@@ -25,7 +25,6 @@ class DQNTeacher(TableTeacher):
         self.estimator = DQN(modelInputSize)
         self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.memIdx = -1
         self.noTargetIte = nSkills*len(tasks)*self.time_to_exam
         self.__targetCounter = 0
 
