@@ -2,7 +2,7 @@
 main file
 """
 from school import Classroom, Plotter, import_results
-from school.teachers import RandomTeacher, BaseTeacher, DQNTeacher
+from school.teachers import RandomTeacher, BaseTeacher, DQNTeacher, TeacherActorCriticTable,TeacherActorCritic
 from school.students import RashStudent
 import os
 
@@ -47,9 +47,17 @@ if __name__ == '__main__':
     timeToExam = 10
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
-    c = Classroom(1, DQNTeacher, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=0.99, nLast=5,
-                  learning_rate=0.05, verbose=False, start_of_random_iteration=10, number_of_random_iteration=5, cnn=True)
-    c.run(timeToExam=timeToExam, numberOfIteration=200, saveResults=False, visualiseResults=True, savePlot=False)
+    c = Classroom(nSkills = 1,
+                teacherModel = TeacherActorCriticTable,#TeacherActorCriticTable,TeacherActorCritic
+                studentModel = RashStudent,
+                timeToExam=timeToExam,
+                nStudents=100,
+                gamma=0.99,
+                nLast = 5,
+                learning_rate=0.05,
+                verbose=False,
+                cnn=False)
+    c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=True)
 
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')

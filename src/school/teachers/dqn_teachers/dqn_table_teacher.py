@@ -11,7 +11,7 @@ from .utils.dqn_structs import *
 from random import random, randint
 
 
-class DQNTeacher(TableTeacher):
+class DQNTableTeacher(TableTeacher):
     """Deep Q-learning agent."""
 
     def __init__(self, nSkills: int, tasks: List[Task], mem_size=4096, batch_size=1024,

@@ -1,17 +1,16 @@
-from typing import List
+import numpy as np
 import tensorflow_probability as tfp
 import tensorflow as tf
 from random import choice
-import numpy as np
+from typing import List
 
 from . import losses
-from . import TeacherNLastHistory
+from . import NLastHistoryTeacher
 from .. import Task
 from .models.actor_critic import *
 
-# start_of_random_iteration=50 wtf
-# number_of_random_iteration=50, end_epsilon=0,
-class TeacherActorCritic(TeacherNLastHistory):
+
+class ActorCriticNLastTeacher(NLastHistoryTeacher):
     def __init__(self,
                 nSkills: int,
                 tasks: List[Task], 
@@ -84,20 +83,3 @@ def _learn_main(actor: tf.keras.Model, critic: tf.keras.Model, state: tf.Tensor,
 
     actor_opt.apply_gradients(zip(actor_grads, actor.trainable_variables))
     critic_opt.apply_gradients(zip(critic_grads, critic.trainable_variables))
-
-
-
-
-# def choose_task(self, student) -> Task:
-    #     if choice(range(100)) < self.epsilon:  # Random action
-    #         action = choice(range(len(self.tasks)))
-    #     else:  # Actor based action
-    #         state = self.get_state(student.id)
-        #     logits = self.actor(state)
-        #     action_probabilities = tfp.distributions.Categorical(logits=logits)
-        #     action = action_probabilities.sample(sample_shape=())
-        #     self.choices[action.numpy()[0]] += 1
-        # if self.verbose:
-        #     print(action)
-        # task = [task_ for task_ in self.tasks if task_.id == action][0]
-        # return task
