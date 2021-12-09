@@ -6,6 +6,8 @@ from school.teachers import RandomTeacher, BaseTeacher, DQNTeacher
 from school.students import RashStudent
 import os
 
+from school.teachers.dqn_teacher_rewrite import DQNTeacherNLastHistory
+
 PATH_BASE = './data/BaseTeacher'
 PATH_RANDOM = './data/RandomTeacher'
 SKILLS = [1, 5, 10, 15, 20, 25]
@@ -44,12 +46,17 @@ def create_base_line():
     draw_all_plots_separately()
     
 if __name__ == '__main__':
-    timeToExam = 10
+    timeToExam = 20
+    nSkills = 2
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
-    c = Classroom(1, DQNTeacher, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=0.99, nLast=5,
-                  learning_rate=0.05, verbose=False, start_of_random_iteration=10, number_of_random_iteration=5, cnn=True)
-    c.run(timeToExam=timeToExam, numberOfIteration=200, saveResults=False, visualiseResults=True, savePlot=False)
+    # c = Classroom(1, DQNTeacher, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=0.99, nLast=5,
+    #               learning_rate=0.05, verbose=False, start_of_random_iteration=10, number_of_random_iteration=5, cnn=True)
+    # c.run(timeToExam=timeToExam, numberOfIteration=200, saveResults=False, visualiseResults=True, savePlot=False)
+    c = Classroom(nSkills, DQNTeacherNLastHistory, RashStudent, timeToExam=timeToExam, nStudents=100, gamma=1, nLast=timeToExam,
+                  learning_rate=0.05, verbose=False, start_of_random_iteration=10, number_of_random_iteration=5,
+                  cnn=False)
+    c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=False)
 
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
