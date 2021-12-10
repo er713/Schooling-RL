@@ -6,6 +6,8 @@ from school.teachers import RandomTeacher, BaseTeacher, DQNTeacher, TeacherActor
 from school.students import RashStudent
 import os
 
+from school.teachers.dqn_teacher_rewrite import DQNTeacherNLastHistory
+
 PATH_BASE = './data/BaseTeacher'
 PATH_RANDOM = './data/RandomTeacher'
 SKILLS = [1, 5, 10, 15, 20, 25]
@@ -44,7 +46,8 @@ def create_base_line():
     draw_all_plots_separately()
     
 if __name__ == '__main__':
-    timeToExam = 10
+    timeToExam = 20
+    nSkills = 2
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
     c = Classroom(nSkills = 1,

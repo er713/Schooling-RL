@@ -19,3 +19,9 @@ class Actor(tf.keras.Model):
         if self.verbose:
             print("State: ", state)
         return self.model(state)
+        
+    def copy_weights(self, otherModel):
+        model=otherModel.model
+        for idx, layer in enumerate(model.layers):
+            weights = layer.get_weights()
+            self.model.layers[idx].set_weights(weights)
