@@ -4,7 +4,8 @@ from typing import List
 from . import TeacherRL
 from .. import Task
 from .state_representation import get_state_inverse, get_state_normal
- 
+
+
 class TeacherNLastHistory(TeacherRL, ABC):
     def __init__(self,
                 nSkills: int,

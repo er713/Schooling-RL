@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 import tensorflow as tf
 from typing import List
@@ -9,12 +7,12 @@ from ... import Result
 
 
 class TableTeacher(TeacherRL):
-    def __init__(self, nSkills: int, tasks: List[Task], timeToExam=None, noExamTasks=None  ,**kwargs):
+    def __init__(self, nSkills: int, tasks: List[Task], timeToExam=None, noExamTasks=None, **kwargs):
         super().__init__(nSkills, tasks, **kwargs)
-        self.students = {} # students states
+        self.students = {}  # students states
         self.students_inner = {}
         self.exam_results = {}
-        self.exam_tasks = nSkills*2
+        self.exam_tasks = nSkills * 2
         self.time_to_exam = timeToExam
 
     def choose_task(self, student, is_learning: bool = True) -> Task:
@@ -41,12 +39,11 @@ class TableTeacher(TeacherRL):
         self.exam_results[result.idStudent].marksSum += result.mark
         if self.exam_results[result.idStudent].noAcquiredExamResults == self.exam_tasks:
             self.update_memory(result, last=True)
-    
-    
+
     def create_new_student(self):
         # information about task consists of fraction of tries and fraction of successes
         return [0] * (2 * len(self.tasks))
-    
+
     def update_student_state(self, result):
         """
             student_state=[ nTF_0, sF_0, nTF_1, sF_1, ...]
@@ -90,4 +87,3 @@ class TableTeacher(TeacherRL):
             tries = inner_student_state[noTryIdx]
             successes = inner_student_state[successes_idx]
         return tries, successes
-

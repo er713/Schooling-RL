@@ -1,19 +1,18 @@
-from .state_representation import TableTeacher
+from ..state_representation import TableTeacher
 from typing import List
-from ..task import Task
-from .models.dqn import *
-from .losses import dqn_loss
+from ...task import Task
+from ..models.dqn import *
+from ..losses import dqn_loss
 import tensorflow as tf
 import tensorflow_probability as tfp
 from random import shuffle
-from .. import Result
+from ... import Result
 from copy import deepcopy
-from .utils.dqn_structs import *
-from . import TeacherNLastHistory
+from ..utils.dqn_structs import *
+from .. import TeacherNLastHistory
 from random import random, randint
-from .models.actor_critic import *
-from . import losses
-
+from ..models.actor_critic import *
+from .. import losses
 
 
 class DQNTableTeacher(TableTeacher):
@@ -30,16 +29,14 @@ class DQNTableTeacher(TableTeacher):
         self.estimator = DQN(modelInputSize)
         self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills*len(tasks)*self.time_to_exam
+        self.noTargetIte = nSkills * len(tasks) * self.time_to_exam
         self.__targetCounter = 0
-
 
     def get_action(self, state):
         task_id = tf.argmax(self.estimator(state)[0]).numpy()
         for task in self.tasks:
             if task.id == task_id:
                 return task
-
 
     def receive_result(self, result, last=False, reward=None) -> None:
         # Exam results need to be reduced in receive_exam_res
@@ -96,7 +93,6 @@ class DQNTableTeacher(TableTeacher):
         targetQ = tf.gather(targetQVector, bestActionIdx, axis=1, batch_dims=1)
         return targetQ
 
-
     def __update_target(self):
         """
                 Copy weights from online network to target networks
@@ -109,8 +105,9 @@ class DQNTableTeacher(TableTeacher):
 
 
 class DQNTeacherNLastHistory(TeacherNLastHistory):
-    
-    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, nStudents: int, mem_size=1024, batch_size=64, cnn=False, verbose=False,
+
+    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, nStudents: int, mem_size=1024, batch_size=64,
+                 cnn=False, verbose=False,
                  **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, nLast, **kwargs)
@@ -127,9 +124,8 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         # self.estimator = DQN(modelInputSize)
         # self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills*len(tasks)
+        self.noTargetIte = nSkills * len(tasks)
         self.__targetCounter = 0
-
 
     def get_action(self, state):
         logits = self.estimator(state)
@@ -138,41 +134,37 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         # print(action)
         action = [task_ for task_ in self.tasks if task_.id == action][0]
         return action
- 
-
 
     def receive_result(self, result, last=False, reward=None) -> None:
         # Exam results need to be reduced in receive_exam_res
         super().receive_result(result, last=last, reward=reward)
         # copy estimator weights to target estimator after noTargetIte iterations
-        
 
     def learn(self):
         states, actions, rewards, next_states, dones = self.mem.sample()
-        
 
         for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
             self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                 next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
-                 done=tf.constant(d, dtype=tf.float32))
-
+                             next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+                             done=tf.constant(d, dtype=tf.float32))
 
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:
             done = 0
             reward_ = 0
         else:
-            done = 1 
+            done = 1
             reward_ = reward
         # update student state with action (given task id) and result of that action
-        self.mem.add(self.get_state(student,shift=1),  self.results[student][-1].task.id, reward_, self.get_state(student,shift=1), done)
+        self.mem.add(self.get_state(student, shift=1), self.results[student][-1].task.id, reward_,
+                     self.get_state(student, shift=1), done)
         if len(self.mem) > self.batch_size:
             self.learn()
             self.__update_target()
 
     @tf.function
     def _learn_main(self, state: tf.Tensor, action: tf.Tensor, next_state: tf.Tensor,
-                reward: tf.Tensor, done: tf.Tensor) -> None:
+                    reward: tf.Tensor, done: tf.Tensor) -> None:
         """
         Dokumentacja
         """
@@ -190,7 +182,6 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
 
         self.estimator_opt.apply_gradients(zip(estimator_grads, self.estimator.trainable_variables))
 
-
     def __update_target(self):
         """
                 Copy weights from online network to target networks
@@ -198,6 +189,5 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         """
         self.__targetCounter += 1
         if self.__targetCounter == self.noTargetIte:
-
             self.__targetCounter = 0
             self.targetEstimator.copy_weights(self.estimator)
