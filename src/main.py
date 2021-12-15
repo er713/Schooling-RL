@@ -47,20 +47,21 @@ def create_base_line():
 
 
 if __name__ == '__main__':
-    timeToExam = 20
-    nSkills = 2
+    timeToExam = 10
+    nSkills = 1
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
     c = Classroom(nSkills=1,
-                  teacherModel=DQNTeacherNLastHistory,
+                  teacherModel=ActorCriticAllHistoryCNNTeacher,
                   studentModel=RashStudent,
                   timeToExam=timeToExam,
                   nStudents=100,
                   gamma=0.99,
-                  nLast=5,
+                  epsilon=0.9,
+                  decay_epsilon=0.999,
                   learning_rate=0.05,
-                  verbose=False,
-                  cnn=False)
+                  verbose=True,
+                  cnn=True)
     c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=True)
 
     # create_base_line()
