@@ -9,7 +9,7 @@ class RandomTeacher(Teacher):
         if tasks is None:
             tasks = []
         super().__init__(nSkills, tasks=tasks, **kwargs)
-    
+
     def choose_task(self, student) -> Task:
         return random.choice(self.tasks)
 
