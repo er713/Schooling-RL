@@ -1,6 +1,7 @@
 from typing import List
 from ...task import Task
 from ..losses import dqn_loss
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from ..utils.dqn_structs import *
@@ -43,6 +44,8 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
         self.noTargetIte = nSkills * len(tasks)
         self.__targetCounter = 0
+        self.verbose = verbose
+        self.choices = np.zeros((self.nTasks,), dtype=np.int_)
 
     def get_action(self, state):
         logits = self.estimator(state)
@@ -60,7 +63,14 @@ class DQNTeacherAllHistory(TeacherAllHistory):
     def learn(self):
         states, actions, rewards, next_states, dones = self.mem.sample()
         # reward = 1000*reward + 0.001
-
+        if self.verbose:
+            self.iteration_st += 1
+            if self.iteration_st % (self.nStudents * 10) == 0:
+                print(self.iteration_st)
+                print('epsilon:', self.epsilon)
+                print('variety:\n',
+                      np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
+                self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
         for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
             self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
                              next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
