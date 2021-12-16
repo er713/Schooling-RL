@@ -131,9 +131,9 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         logits = self.estimator(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
         action = action_probabilities.sample(sample_shape=())
-        # print(action)
-        action = [task_ for task_ in self.tasks if task_.id == action][0]
-        return action
+        for task in self.tasks:
+            if task.id == action:
+                return task
 
     def receive_result(self, result, last=False, reward=None) -> None:
         # Exam results need to be reduced in receive_exam_res

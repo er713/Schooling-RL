@@ -10,7 +10,7 @@ from ... import Task
 from ..models.actor_critic import *
 
 
-class ActorCriticAllHistoryCNNTeacher(TeacherAllHistory):
+class ActorCriticAllHistoryTeacher(TeacherAllHistory):
     def __init__(self,
                  nSkills: int,
                  tasks: List[Task],

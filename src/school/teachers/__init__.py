@@ -1,5 +1,5 @@
 __all__ = ["ActorCriticNLastTeacher", "Teacher", "RandomTeacher", "BaseTeacher", "TeacherRL", "DQNTableTeacher",
-           "ActorCriticTableTeacher", "DQNTeacherNLastHistory", "ActorCriticAllHistoryCNNTeacher"]
+           "ActorCriticTableTeacher", "DQNTeacherNLastHistory", "ActorCriticAllHistoryTeacher", "DQNTeacherAllHistory"]
 
 from .teacher import Teacher
 from .teacher_rl import TeacherRL
