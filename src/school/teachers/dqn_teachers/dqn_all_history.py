@@ -51,7 +51,7 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         logits = self.estimator(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
         action = action_probabilities.sample(sample_shape=())
-        self.choices[action] += 1
+        self.choices[action[0]] += 1
         for task in self.tasks:
             if task.id == action:
                 return task
