@@ -108,4 +108,5 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         self.__targetCounter += 1
         if self.__targetCounter == self.noTargetIte:
             self.__targetCounter = 0
-            self.targetEstimator.copy_weights(self.estimator)
+            # self.targetEstimator.copy_weights(self.estimator)
+            self.targetEstimator.set_weights(self.estimator.get_weights())
