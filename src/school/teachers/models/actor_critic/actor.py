@@ -8,10 +8,10 @@ class Actor(tf.keras.Model):
         super().__init__(*args, **kwargs)
         self.verbose = verbose
         self.model = tf.keras.Sequential([
-            tf.keras.layers.Dense(units=30, activation=tf.nn.relu),
-            tf.keras.layers.Dense(units=50, activation=tf.nn.relu),
-            tf.keras.layers.Dense(units=50, activation=tf.nn.relu),
-            tf.keras.layers.Dense(units=nTasks)
+            tf.keras.layers.Dense(units=30, activation=tf.nn.relu, name='actor1'),
+            tf.keras.layers.Dense(units=50, activation=tf.nn.relu, name='actor2'),
+            tf.keras.layers.Dense(units=50, activation=tf.nn.relu, name='actor3'),
+            tf.keras.layers.Dense(units=nTasks, name='actor_out')
         ])
 
     @tf.function

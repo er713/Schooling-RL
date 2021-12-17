@@ -1,10 +1,11 @@
 __all__ = ["ActorCriticNLastTeacher", "Teacher", "RandomTeacher", "BaseTeacher", "TeacherRL", "DQNTableTeacher",
-           "ActorCriticTableTeacher", "DQNTeacherNLastHistory", "ActorCriticAllHistoryTeacher", "DQNTeacherAllHistory"]
+           "ActorCriticTableTeacher", "DQNTeacherNLastHistory", "ActorCriticAllHistoryCNNTeacher",
+           "DQNTeacherAllHistoryCNN", "ActorCriticAllHistoryRNNTeacher"]
 
 from .teacher import Teacher
 from .teacher_rl import TeacherRL
 from .teacher_n_last_history_rewrite import TeacherNLastHistory
-from .teacher_all_history import TeacherAllHistory
+from .teacher_all_history import TeacherAllHistory, TeacherAllHistoryRNN
 from .randomTeacher import RandomTeacher
 from .base_teacher import BaseTeacher
 from .dqn_teachers import *

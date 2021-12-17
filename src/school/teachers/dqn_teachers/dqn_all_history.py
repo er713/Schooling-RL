@@ -11,7 +11,7 @@ from .. import losses
 from ..layers import AllHistoryCNN, EmbeddedTasks
 
 
-class DQNTeacherAllHistory(TeacherAllHistory):
+class DQNTeacherAllHistoryCNN(TeacherAllHistory):
 
     def __init__(self, nSkills: int, tasks: List[Task], nStudents: int, mem_size=1024, batch_size=64,
                  cnn=False, verbose=False, filters: int = 5, task_embedding_size: int = 5, base_history: int = 5,
@@ -24,20 +24,15 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         self.lossFun = dqn_loss
         self._estimator = Actor(self.nTasks, verbose=verbose)
         self._targetEstimator = Actor(self.nTasks, verbose=verbose)
-        if not cnn:
-            pass  # TODO: change for RNN
-            # self.estimator = Actor(self.nTasks, verbose=verbose)
-            # self.targetEstimator = Actor(self.nTasks, verbose=verbose)
-        else:
-            self.estimator = tf.keras.Sequential([
-                self.embedding_for_tasks,
-                AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
-                self._estimator])
-            self.targetEstimator = tf.keras.Sequential([
-                EmbeddedTasks(self.nTasks, self.task_embedding_size, self.base_history),
-                AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
-                self._targetEstimator
-            ])
+        self.estimator = tf.keras.Sequential([
+            self.embedding_for_tasks,
+            AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
+            self._estimator])
+        self.targetEstimator = tf.keras.Sequential([
+            EmbeddedTasks(self.nTasks, self.task_embedding_size, self.base_history),
+            AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
+            self._targetEstimator
+        ])
         self.estimator_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         # self.estimator = DQN(modelInputSize)
         # self.targetEstimator = DQN(modelInputSize)

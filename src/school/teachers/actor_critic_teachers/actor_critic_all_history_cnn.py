@@ -10,7 +10,7 @@ from ... import Task
 from ..models.actor_critic import *
 
 
-class ActorCriticAllHistoryTeacher(TeacherAllHistory):
+class ActorCriticAllHistoryCNNTeacher(TeacherAllHistory):
     def __init__(self,
                  nSkills: int,
                  tasks: List[Task],
@@ -25,15 +25,14 @@ class ActorCriticAllHistoryTeacher(TeacherAllHistory):
 
         self._actor = Actor(self.nTasks)
         self._critic = Critic()
-        if cnn:
-            self.actor = tf.keras.Sequential(
-                [self.embedding_for_tasks,
-                 AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
-                 self._actor])
-            self.critic = tf.keras.Sequential(
-                [self.embedding_for_tasks,
-                 AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
-                 self._critic])
+        self.actor = tf.keras.Sequential(
+            [self.embedding_for_tasks,
+             AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
+             self._actor])
+        self.critic = tf.keras.Sequential(
+            [self.embedding_for_tasks,
+             AllHistoryCNN(self.task_embedding_size, self.base_history, filters),
+             self._critic])
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 

@@ -7,7 +7,6 @@ def get_state_inverse(results: Dict, idStudent: int, shift: int = 0) -> tf.Tenso
     Function for getting state out of history (results) for specified student (in order t-1, t-2, ...).
     :param results: Dictionary with list of Results assigned to (int) Student ID
     :param idStudent: Student ID
-    :param nTasks: Number of Tasks (during learning process)
     :param shift: Shift to the past/how many recent Results skip. Has to be positive.
     :return: State - Tensor of int/float of shape nLast * (nTasks + 1)
     """
@@ -32,3 +31,13 @@ def _get_state_inverse(student_results: tf.Tensor) -> tf.Tensor:
     # state.assign(tf.reverse(state, [1]))  # Change positions to ensure order where first is the most recent one
     # _complete_empty(state, nLast, nTasks)
     return tf.convert_to_tensor(state)
+
+
+def get_state_for_rnn(results: List):
+    if results[0] is not None:
+        state_task = _get_state_inverse(
+            tf.convert_to_tensor([[results[0].task.id, results[0].mark]], dtype=tf.float32)
+        )
+    else:
+        state_task = tf.convert_to_tensor([[], []], dtype=tf.float32)
+    return state_task, results[1]

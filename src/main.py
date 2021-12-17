@@ -47,23 +47,24 @@ def create_base_line():
 
 
 if __name__ == '__main__':
-    timeToExam = 40
-    nSkills = 4
+    timeToExam = 10
+    nSkills = 1
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
     c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherAllHistory,
+                  teacherModel=ActorCriticAllHistoryRNNTeacher,
                   studentModel=RashStudent,
                   timeToExam=timeToExam,
                   nStudents=100,
                   gamma=0.99,
                   epsilon=0.9,
-                  decay_epsilon=0.9992,
-                  learning_rate=0.05,
-                  min_eps=0.2,
+                  decay_epsilon=0.9995,
+                  learning_rate=0.02,
+                  min_eps=0.02,
                   verbose=True,
                   cnn=True)
-    c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=True)
+    c.run(timeToExam=timeToExam, minimalThreshold=(2, 0.7), numberOfIteration=1000, saveResults=True,
+          visualiseResults=True, savePlot=True)
 
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
