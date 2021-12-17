@@ -21,9 +21,8 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         self.nStudents = nStudents
         self.mem_size = mem_size
         self.batch_size = batch_size
-        self.lossFun = dqn_loss
-        self._estimator = Actor(self.nTasks, verbose=verbose)
-        self._targetEstimator = Actor(self.nTasks, verbose=verbose)
+        self._estimator = Actor(self.nTasks, verbose=verbose, normalize=True)
+        self._targetEstimator = Actor(self.nTasks, verbose=verbose, normalize=True)
         if not cnn:
             pass  # TODO: change for RNN
             # self.estimator = Actor(self.nTasks, verbose=verbose)
@@ -98,9 +97,9 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         Dokumentacja
         """
         with tf.GradientTape() as estimator_tape:
-            q = self.estimator(state)
-            q_next = self.estimator(next_state)
-            logits = self.targetEstimator(state)
+            q = self.targetEstimator(state)
+            q_next = self.targetEstimator(next_state)
+            logits = self.estimator(state)
 
             δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
             # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function

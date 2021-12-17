@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
     c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherNLastHistory,
+                  teacherModel=DQNTeacherAllHistory,
                   studentModel=RashStudent,
                   timeToExam=timeToExam,
                   nStudents=100,
@@ -60,8 +60,8 @@ if __name__ == '__main__':
                   epsilon=0.9,
                   decay_epsilon=0.9992,
                   learning_rate=0.05,
-                  min_eps=0.2,
-                  nLast=timeToExam,
+                  min_eps=0.04,
+                  # nLast=timeToExam,
                   verbose=True,
                   cnn=True)
     c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=True)
