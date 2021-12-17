@@ -73,9 +73,9 @@ def _learn_main(ac: tf.keras.Model, state: tf.Tensor, action: tf.Tensor,
     Dokumentacja
     """
     with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
-        q, st = ac.get_specific_call(state[0], state[1], 1)
-        q_next, _ = ac.get_specific_call(next_state[0], st, 1)
-        logits, _ = ac.get_specific_call(state[0], state[1], 0)
+        [_, q], st = ac(state[0], state[1])
+        [_, q_next], _ = ac(next_state[0], st)
+        [logits, _], _ = ac(state[0], state[1])
 
         δ = reward + gamma * q_next * (1 - done) - q  # this works w/o tf.function
         # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
@@ -83,9 +83,11 @@ def _learn_main(ac: tf.keras.Model, state: tf.Tensor, action: tf.Tensor,
         actor_loss = losses.actor_loss(logits, action, δ)
         critic_loss = δ ** 2  # MSE?
 
-    critic_grads = critic_tape.gradient(critic_loss, ac.trainable_variables)
-    ac_opt.apply_gradients(zip(critic_grads, ac.trainable_variables))
+    variables = ac.get_specific_variables(1)
+    critic_grads = critic_tape.gradient(critic_loss, variables)
+    ac_opt.apply_gradients(zip(critic_grads, variables))
 
-    actor_grads = actor_tape.gradient(actor_loss, ac.trainable_variables)
-    ac_opt.apply_gradients(zip(actor_grads, ac.trainable_variables))
+    variables = ac.get_specific_variables(0)
+    actor_grads = actor_tape.gradient(actor_loss, variables)
+    ac_opt.apply_gradients(zip(actor_grads, variables))
 

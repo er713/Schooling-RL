@@ -58,9 +58,9 @@ if __name__ == '__main__':
                   nStudents=100,
                   gamma=0.99,
                   epsilon=0.9,
-                  decay_epsilon=0.9995,
+                  decay_epsilon=0.9996,
                   learning_rate=0.02,
-                  min_eps=0.02,
+                  min_eps=0.03,
                   verbose=True,
                   cnn=True)
     c.run(timeToExam=timeToExam, minimalThreshold=(2, 0.7), numberOfIteration=1000, saveResults=True,

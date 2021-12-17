@@ -9,7 +9,8 @@ class RNNWrapper(tf.keras.Model):
         super().__init__(self)
         self.task_embeddings = EmbeddedTasks(nTasks, task_embedding_size, 1)
 
-        self.h01 = Embedding(1, rnn_units, name='emb_h01')  # , embeddings_constraint=tf.keras.constraints.MinMaxNorm(-1., 1.))
+        self.h01 = Embedding(1, rnn_units,
+                             name='emb_h01')  # , embeddings_constraint=tf.keras.constraints.MinMaxNorm(-1., 1.))
         self.h02 = Embedding(1, rnn_units, name='emb_h02')
         self.rnn = LSTMCell(rnn_units)
 
@@ -34,3 +35,11 @@ class RNNWrapper(tf.keras.Model):
         out, state = self._call_rnn(task_with_mark, student_state)
         result = self.models[modelId](out)
         return result, state
+
+    def get_specific_variables(self, modelId: int = 0):
+        # variables = self.trainable_variables
+        emb_rnn = []
+        [[emb_rnn.append(l) for l in layer.trainable_variables] for layer in
+         (self.task_embeddings, self.h01, self.h02, self.rnn)]
+        sec = self.models[modelId].trainable_variables
+        return [*emb_rnn, *sec]
