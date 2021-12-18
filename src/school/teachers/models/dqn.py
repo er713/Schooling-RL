@@ -11,8 +11,9 @@ class DQN(tf.keras.Model):
         self.loss = dqn_loss()
 
         self.model = tf.keras.Sequential([
-            Dense(3 * inputSize, activation='relu', input_shape=(inputSize,)),
-            Dense(2 * inputSize, activation='relu'),
+            Dense(4*inputSize, activation='relu', input_shape=(inputSize,)),
+            Dense(2*inputSize, activation='relu'),
+            Dense(inputSize, activation='relu'),
             Dense(inputSize/2)
         ])
 

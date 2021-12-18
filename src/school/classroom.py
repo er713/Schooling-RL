@@ -63,9 +63,9 @@ class Classroom:
         self.results: List[Result] = []
         self.saveTaskNumber: int = saveResultsNumber
         if now is None:
-            now = datetime.now()
-        self.exportFileName: str = f"{self._studentModel.get_name()}__{self.nStudents}_{self.nSkills}__{now.year}-" + \
-                                   f"{now.month}-{now.day}_{now.time().hour}-{now.time().minute}."
+            self.now = datetime.now()
+        else:
+            self.now = now
 
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
@@ -163,6 +163,9 @@ class Classroom:
         :param saveResults: If True, dump all Results to file.
         :param savePlot: If True, save plot, works only if visualiseResults is True.
         """
+        self.exportFileName: str = f"{self._studentModel.get_name()}__{self.nStudents}_{self.nSkills}__{timeToExam}__{numberOfIteration}__{self.now.year}-" + \
+                                   f"{self.now.month}-{self.now.day}_{self.now.time().hour}-{self.now.time().minute}."
+
         if learningType == self._SINGLE_STUDENT and self.nStudents != 1:
             warnings.warn('Probably nStudents should be 1, because only one student will be taught before exam',
                           UserWarning)
