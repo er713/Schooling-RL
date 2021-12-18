@@ -21,7 +21,6 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         self.nStudents = nStudents
         self.mem_size = mem_size
         self.batch_size = batch_size
-        self.lossFun = dqn_loss
         self._estimator = Actor(self.nTasks, verbose=verbose)
         self._targetEstimator = Actor(self.nTasks, verbose=verbose)
         self.estimator = tf.keras.Sequential([
@@ -46,6 +45,7 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         logits = self.estimator(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
         action = action_probabilities.sample(sample_shape=())
+        self.choices[action[0]] += 1
         for task in self.tasks:
             if task.id == action:
                 return task
@@ -92,9 +92,9 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         Dokumentacja
         """
         with tf.GradientTape() as estimator_tape:
-            q = self.estimator(state)
-            q_next = self.estimator(next_state)
-            logits = self.targetEstimator(state)
+            q = self.targetEstimator(state)
+            q_next = self.targetEstimator(next_state)
+            logits = self.estimator(state)
 
             δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
             # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function

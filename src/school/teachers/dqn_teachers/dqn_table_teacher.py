@@ -113,7 +113,6 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         super().__init__(nSkills, tasks, nLast, **kwargs)
         self.mem_size = mem_size
         self.batch_size = batch_size
-        self.lossFun = dqn_loss
         if not cnn:
             self.estimator = Actor(self.nTasks, verbose=verbose)
             self.targetEstimator = Actor(self.nTasks, verbose=verbose)
@@ -169,13 +168,12 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         Dokumentacja
         """
         with tf.GradientTape() as estimator_tape:
-            q = self.estimator(state)
-            q_next = self.estimator(next_state)
-            logits = self.targetEstimator(state)
+            q = self.targetEstimator(state)
+            q_next = self.targetEstimator(next_state)
+            logits = self.estimator(state)
 
             δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
             # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
-
             estimator_loss = losses.actor_loss(logits, action, δ)
 
         estimator_grads = estimator_tape.gradient(estimator_loss, self.estimator.trainable_variables)
