@@ -9,6 +9,7 @@ class Teacher:
         self.tasks = tasks
         self.nSkills = nSkills
         self.choices = np.zeros((len(tasks),), dtype=np.int_)
+        self.task_distribution = np.zeros((len(tasks),), dtype=np.int_)
 
     @abstractmethod
     def choose_task(self, student) -> Task:

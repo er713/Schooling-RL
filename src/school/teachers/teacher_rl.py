@@ -43,12 +43,14 @@ class TeacherRL(Teacher):
     def receive_result(self, result, reward=None, last=False) -> None:
         self.epsilon = max(self.min_eps, self.epsilon * self.decay_epsilon)
         # print('receive', last)
-        if last and self.verbose:
+        if last:
             self.verbose_counter += 1
             # print('last', self.verbose_counter)
             if self.verbose_counter % self.nStudents == 0:  # Print once for iteration
-                print('epsilon:', self.epsilon)
-                print('variety:\n', np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
+                if self.verbose:
+                    print('epsilon:', self.epsilon)
+                    print('variety:\n', np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
+                np.copyto(self.task_distribution, self.choices)
                 self.choices.fill(0)
                 self.verbose_counter = 0
 
