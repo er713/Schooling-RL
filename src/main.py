@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
 
     c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherAllHistoryCNN,
+                  teacherModel=DQNTeacherAllHistoryRNN,
                   studentModel=RashStudent,
                   timeToExam=timeToExam,
                   nStudents=100,

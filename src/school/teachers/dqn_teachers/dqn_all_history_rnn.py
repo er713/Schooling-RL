@@ -64,8 +64,8 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
                       np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
                 self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
         for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-            self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                             next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+            self._learn_main(state=s, action=a,
+                             next_state=ns, reward=tf.constant(r, dtype=tf.float32),
                              done=tf.constant(d, dtype=tf.float32))
 
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
@@ -89,11 +89,11 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         Dokumentacja
         """
         with tf.GradientTape() as estimator_tape:
-            q, st = self.targetEstimator.get_specific_call(state[0], state[1], 1)
-            q_next, _ = self.targetEstimator.get_specific_call(next_state, st, 1)
-            logits, _ = self.estimator.get_specific_call(state[0], state[1], 0)
+            q, st = self.targetEstimator.get_specific_call(state[0], state[1])
+            q_next, _ = self.targetEstimator.get_specific_call(next_state[0], next_state[1])
+            logits, _ = self.estimator.get_specific_call(state[0], state[1])
 
-            δ = reward + self.gamma * q_next * (tf.constant(1) - done) - q  # this works w/o tf.function
+            δ = reward + self.gamma * q_next * (1 - done) - q  # this works w/o tf.function
             # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
 
             estimator_loss = losses.actor_loss(logits, action, δ)
