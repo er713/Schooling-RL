@@ -73,9 +73,9 @@ def _learn_main(ac: tf.keras.Model, state: tf.Tensor, action: tf.Tensor,
     Dokumentacja
     """
     with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
-        [_, q], st = ac(state[0], state[1])
-        [_, q_next], _ = ac(next_state[0], st)
-        [logits, _], _ = ac(state[0], state[1])
+        q, st = ac.get_specific_call(state[0], state[1], 1)
+        q_next, _ = ac.get_specific_call(next_state[0], next_state[1], 1)
+        logits, _ = ac.get_specific_call(state[0], state[1], 0)
 
         δ = reward + gamma * q_next * (1 - done) - q  # this works w/o tf.function
         # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function

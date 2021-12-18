@@ -80,7 +80,7 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
             reward_ = reward
         # update student state with action (given task id) and result of that action
         self.mem.add(self.get_state(student, shift=1), self.results[student][-1].task.id, reward_,
-                     self.get_state(student, shift=1), done)
+                     self.get_state(student, shift=0), done)
         if len(self.mem) > self.batch_size:
             self.learn()
             self.__update_target()
