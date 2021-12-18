@@ -13,16 +13,16 @@ from ..layers import AllHistoryCNN, EmbeddedTasks
 
 class DQNTeacherAllHistory(TeacherAllHistory):
 
-    def __init__(self, nSkills: int, tasks: List[Task], nStudents: int, mem_size=1024, batch_size=64,
-                 cnn=False, verbose=False, filters: int = 5, task_embedding_size: int = 5, base_history: int = 5,
+    def __init__(self, nSkills: int, tasks: List[Task], mem_size=1024, batch_size=64,
+                 cnn=False, filters: int = 5, task_embedding_size: int = 5, base_history: int = 5,
                  **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, task_embedding_size, base_history, **kwargs)
-        self.nStudents = nStudents
+        # self.nStudents = nStudents
         self.mem_size = mem_size
         self.batch_size = batch_size
-        self._estimator = Actor(self.nTasks, verbose=verbose, normalize=True)
-        self._targetEstimator = Actor(self.nTasks, verbose=verbose, normalize=True)
+        self._estimator = Actor(self.nTasks, verbose=self.verbose, normalize=True)
+        self._targetEstimator = Actor(self.nTasks, verbose=self.verbose, normalize=True)
         if not cnn:
             pass  # TODO: change for RNN
             # self.estimator = Actor(self.nTasks, verbose=verbose)
@@ -43,8 +43,6 @@ class DQNTeacherAllHistory(TeacherAllHistory):
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
         self.noTargetIte = nSkills * len(tasks)
         self.__targetCounter = 0
-        self.verbose = verbose
-        self.choices = np.zeros((self.nTasks,), dtype=np.int_)
 
     def get_action(self, state):
         logits = self.estimator(state)
@@ -62,15 +60,6 @@ class DQNTeacherAllHistory(TeacherAllHistory):
 
     def learn(self):
         states, actions, rewards, next_states, dones = self.mem.sample()
-        # reward = 1000*reward + 0.001
-        if self.verbose:
-            self.iteration_st += 1
-            if self.iteration_st % (self.nStudents * 10) == 0:
-                print(self.iteration_st)
-                print('epsilon:', self.epsilon)
-                print('variety:\n',
-                      np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
-                self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
         for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
             self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
                              next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),

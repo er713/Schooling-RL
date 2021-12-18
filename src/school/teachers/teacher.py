@@ -1,12 +1,14 @@
 from abc import abstractmethod
 from typing import List
 from .. import Task
+import numpy as np
 
 
 class Teacher:
     def __init__(self, nSkills: int, tasks: List[Task], **kwargs) -> None:
         self.tasks = tasks
         self.nSkills = nSkills
+        self.choices = np.zeros((len(tasks),), dtype=np.int_)
 
     @abstractmethod
     def choose_task(self, student) -> Task:

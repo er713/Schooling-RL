@@ -99,6 +99,7 @@ class Classroom:
         """
         for student in self.students:
             for time in range(timeToExam):
+                # print(time == timeToExam - 1)
                 self._learn_student(student, last=(time == timeToExam - 1))
 
     def _learning_loop_all_student_parallel(self, timeToExam: int) -> None:
