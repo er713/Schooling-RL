@@ -1,5 +1,5 @@
 from typing import List, Dict
-import tensorflow as tf
+from . import tf, __state_all
 
 
 def get_state_inverse(results: Dict, idStudent: int, shift: int = 0) -> tf.Tensor:
@@ -18,12 +18,13 @@ def get_state_inverse(results: Dict, idStudent: int, shift: int = 0) -> tf.Tenso
         tf.reshape(tf.convert_to_tensor(student_results, dtype=tf.float32), shape=(len(student_results), 2)))
 
 
-state = tf.Variable([[], []], dtype=tf.float32, trainable=False, shape=(2, None))
+def get_state():
+    return __state_all
 
 
 @tf.function(input_signature=[tf.TensorSpec(shape=(None, 2), dtype=tf.float32)])
 def _get_state_inverse(student_results: tf.Tensor) -> tf.Tensor:
-    global state
+    state = get_state()
     state.assign(tf.convert_to_tensor([[], []]))  # initialize empty
     for result in student_results:
         state.assign(tf.concat([state.value(),  # prev state

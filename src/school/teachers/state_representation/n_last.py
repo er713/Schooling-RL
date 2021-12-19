@@ -1,5 +1,5 @@
 from typing import List, Dict
-import tensorflow as tf
+from . import tf, __state
 
 
 def _complete_empty(_state: tf.Variable, nLast: tf.Tensor, nTasks: tf.Tensor) -> None:
@@ -26,7 +26,10 @@ def get_state_inverse(results: Dict, idStudent: int, nLast: int, nTasks: int, sh
         tf.constant(nLast, dtype=tf.int32), tf.constant(nTasks, dtype=tf.int32))
 
 
-state = tf.Variable([], dtype=tf.float32, trainable=False, shape=(None,))
+def get_state() -> tf.Variable:
+    # if cl_state is None:
+    #     __state = tf.Variable([], dtype=tf.float32, trainable=False, shape=(None,))
+    return __state
 
 
 @tf.function(
@@ -35,7 +38,7 @@ state = tf.Variable([], dtype=tf.float32, trainable=False, shape=(None,))
                      tf.TensorSpec(shape=(), dtype=tf.int32)]
 )
 def _get_state_inverse(student_results: tf.Tensor, nLast: tf.Tensor, nTasks: tf.Tensor) -> tf.Tensor:
-    global state
+    state = get_state()
     state.assign(tf.convert_to_tensor([]))  # initialize empty
     for result in student_results:
         state.assign(tf.concat([state.value(),  # prev state
@@ -73,7 +76,7 @@ def get_state_normal(results: Dict, idStudent: int, nLast: int, nTasks: int, shi
                      tf.TensorSpec(shape=(), dtype=tf.int32)]
 )
 def _get_state_normal(student_results: tf.Tensor, nLast: tf.Tensor, nTasks: tf.Tensor) -> tf.Tensor:
-    global state
+    state = get_state()
     state.assign(tf.convert_to_tensor([]))  # initialize empty
     for result in student_results:
         state.assign(tf.concat([state.value(),  # prev state
