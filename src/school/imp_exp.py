@@ -32,3 +32,14 @@ def export_results(path: str, results: List[Result]) -> None:
         if writeHeader:
             writer.writeheader()
         writer.writerows([res.get_dict() for res in results])
+
+
+def export_improvements(path: str, improvements: List[dict]):
+    writeHeader = not isfile(path)
+
+    with open(path, 'a') as file_csv:
+        writer = csv.DictWriter(file_csv, dialect='unix', fieldnames=improvements[0].keys(),
+                                quoting=csv.QUOTE_NONE, escapechar=' ')
+        if writeHeader:
+            writer.writeheader()
+        writer.writerows(improvements)

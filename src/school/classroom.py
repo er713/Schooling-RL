@@ -6,6 +6,7 @@ from os import makedirs
 from datetime import datetime
 
 from . import Task, Result, Plotter, import_results, export_results
+from .imp_exp import export_improvements
 from .students import Student
 from .teachers import Teacher, TeacherNLastHistory
 
@@ -66,7 +67,10 @@ class Classroom:
             self.now = datetime.now()
         else:
             self.now = now
-
+        #skill: mean_proficiency of all students
+        self._mean_proficiency={}
+        #list of mean_proficiency from different iterations
+        self._all_proficiency_improvements=[]
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
             self._ALL_ONE_BY_ONE: self._learning_loop_all_student,
@@ -83,7 +87,9 @@ class Classroom:
         """
         assert learningType in self._learning_types
         self.students = self._generate_students(self.nStudents)
+        self._update_mean_proficiency()
         self._learning_types[learningType](timeToExam)
+        self._add_proficiency_improvement()
 
     def _learning_loop_single_student(self, timeToExam: int) -> None:
         """
@@ -316,6 +322,8 @@ class Classroom:
 
             export_results(path + self.exportFileName + 'csv', self.results)
             self.results = []
+            export_improvements(path+ "impr_"+self.exportFileName +'csv', self._all_proficiency_improvements)
+            self._all_proficiency_improvements=[]
 
     def import_results(self, path: str = None, fileName: str = None) -> List[Result]:
         """
@@ -332,6 +340,19 @@ class Classroom:
 
         return import_results(path + fileName)
 
+    def  _update_mean_proficiency(self):
+        self._mean_proficiency={}
+        for skill in range(self.nSkills):
+            self._mean_proficiency[skill]=np.mean([s._proficiency[skill] for s in self.students])
+        return self._mean_proficiency
+
+    def _add_proficiency_improvement(self):
+        start_prof=self._mean_proficiency
+        improvement={}
+        curr_prof=self._update_mean_proficiency()
+        for skill in range(self.nSkills):
+            improvement[skill]=curr_prof[skill]-start_prof[skill]
+        self._all_proficiency_improvements.append(improvement)
 
 if __name__ == "__main__":
     c = Classroom(7, Teacher, Student)
