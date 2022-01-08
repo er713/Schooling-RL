@@ -24,7 +24,7 @@ def draw_all_plots_separately():
     for path in [PATH_BASE, PATH_RANDOM]:
         files = os.listdir(path)
         for file in files:
-            if '.csv' in file:
+            if '.csv' in file and 'tasks_' not in file:
                 Plotter.plot_from_csv(f'{path}/{file}', f'{path}/{file.replace("csv", "png")}')
 
 
@@ -50,21 +50,23 @@ if __name__ == '__main__':
     timeToExam = 10
     nSkills = 1
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
+    file = f"./data/RandomTeacher/tasks_RashStudent__100_1__10__3__2022-1-8_14-31.csv"
+    Plotter.draw_tasks_distribution(file)
 
-    c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherAllHistory,
-                  studentModel=RashStudent,
-                  timeToExam=timeToExam,
-                  nStudents=100,
-                  gamma=0.99,
-                  epsilon=0.9,
-                  decay_epsilon=0.9992,
-                  learning_rate=0.05,
-                  min_eps=0.04,
-                  # nLast=timeToExam,
-                  verbose=True,
-                  cnn=True)
-    c.run(timeToExam=timeToExam, numberOfIteration=1000, saveResults=True, visualiseResults=True, savePlot=True)
+    # c = Classroom(nSkills=nSkills,
+    #               teacherModel=RandomTeacher,
+    #               studentModel=RashStudent,
+    #               timeToExam=timeToExam,
+    #               nStudents=100,
+    #               gamma=0.99,
+    #               epsilon=0.9,
+    #               decay_epsilon=0.9992,
+    #               learning_rate=0.05,
+    #               min_eps=0.04,
+    #               # nLast=timeToExam,
+    #               verbose=True,
+    #               cnn=True)
+    # c.run(timeToExam=timeToExam, numberOfIteration=3, saveResults=True, visualiseResults=True, savePlot=True)
 
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')

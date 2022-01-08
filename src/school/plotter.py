@@ -5,6 +5,8 @@ import re
 import copy
 from . import import_results, Result
 import numpy as np
+import pandas as pd
+
 
 class Plotter:
     """
@@ -80,7 +82,20 @@ class Plotter:
 
         Plotter.__plot_multiple(results, save_path, labels)
 
-
+    @staticmethod
+    def draw_tasks_distribution(path):
+        df = pd.read_csv(path,header=None,skiprows=[0])
+        headers = [(x//7, (x%7)-3)  for x in range(int(df.shape[1])) ]
+        # df.columns = headers
+        fig = plt.figure()
+        plt.plot(df, label=headers)
+        plt.title('Dystrubucja zadań')
+        plt.xlabel('Numer egzaminu')
+        plt.ylabel('Ile razy zadanie zostało wybrane')
+        plt.legend()
+        plt.show()
+        fig.savefig(path.replace('.csv',''), dpi=fig.dpi)
+        plt.close()
 
     @staticmethod
     def plot_compare_results(results_path: List[str],
