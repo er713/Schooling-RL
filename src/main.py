@@ -48,23 +48,24 @@ def create_base_line():
 
 if __name__ == '__main__':
     timeToExam = 5
-    nSkills = 1
+    nSkills = 3
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
-
-    c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherAllHistoryRNN,
-                  studentModel=RashStudent,
-                  timeToExam=timeToExam,
-                  nStudents=100,
-                  gamma=0.99,
-                  epsilon=0.9,
-                  decay_epsilon=0.9992,
-                  learning_rate=0.05,
-                  min_eps=0.03,
-                  verbose=True,
-                  cnn=True)
-    c.run(timeToExam=timeToExam, minimalThreshold=(4, 0.5), numberOfIteration=1000, saveResults=True,
-          visualiseResults=True, savePlot=True)
+    file = f"./data/RandomTeacher/impr_RashStudent__100_3__5__3__2022-1-8_15-26.csv"
+    Plotter.draw_student_progress(file)
+    # c = Classroom(nSkills=nSkills,
+    #               teacherModel=RandomTeacher,
+    #               studentModel=RashStudent,
+    #               timeToExam=timeToExam,
+    #               nStudents=100,
+    #               gamma=0.99,
+    #               epsilon=0.9,
+    #               decay_epsilon=0.9992,
+    #               learning_rate=0.05,
+    #               min_eps=0.03,
+    #               verbose=True,
+    #               cnn=False)
+    # c.run(timeToExam=timeToExam, numberOfIteration=3, saveResults=True,
+    #       visualiseResults=True, savePlot=True)
 
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')

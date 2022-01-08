@@ -5,6 +5,7 @@ import re
 import copy
 from . import import_results, Result
 import numpy as np
+import pandas as pd
 
 class Plotter:
     """
@@ -238,4 +239,18 @@ class Plotter:
         :param: str save_path: Path where user want save csv file
         """
         np.savetxt(save_path,self.results)
+
+    @staticmethod
+    def draw_student_progress(path):
+        df = pd.read_csv(path,header=None,skiprows=[0])
         
+        fig = plt.figure()
+        plt.plot(df, label=df.columns )
+        plt.plot(np.mean(df,axis=1),label='Średnia zmiana')
+        plt.title('Progres studentw')
+        plt.xlabel('Numer egzaminu')
+        plt.ylabel('Zmiana poziomu')
+        plt.legend()
+        plt.show()
+        fig.savefig(path.replace('.csv',''), dpi=fig.dpi)
+        plt.close()  
