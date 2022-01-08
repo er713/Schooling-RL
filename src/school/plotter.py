@@ -79,8 +79,29 @@ class Plotter:
                 results.append(Result.get_exams_means(import_results(file_path)))
 
         Plotter.__plot_multiple(results, save_path, labels)
+    
+    @staticmethod
+    def plot_from_csv_with_std(files: List[str], save_path: str, title: str):
+        results = []
+        for file in files:
+            results.append(Result.get_exams_means(import_results(file)))
+        m = np.mean(results,axis=1)
+        std = np.std(results,axis=1)
+        fig = plt.figure()
+        plt.plot(m)
+        plt.fill_between(range(len(m)),m+std,m-std, alpha=.2)
+        plt.xlabel("Numer egzaminu")
+        plt.ylabel("Wynik")
+        plt.title(title)
+        plt.legend()
+        plt.show()
 
-
+        
+        fig.savefig(save_path, dpi=fig.dpi)
+        plt.close()
+    # plt.plot(m , label=lables[i],color=COLORS[i])
+    # plt.fill_between(range(len(m)),m+std, m-std, facecolor=COLORS[i], alpha=.2)
+        
 
     @staticmethod
     def plot_compare_results(results_path: List[str],

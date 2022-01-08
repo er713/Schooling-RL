@@ -1,11 +1,11 @@
 """
 main file
 """
-from school import Classroom, Plotter, import_results
-from school.teachers import *
-from school.students import RashStudent
-import os
-
+# from school import Classroom, Plotter, import_results
+# from school.teachers import *
+# from school.students import RashStudent
+# import os
+from school import Plotter
 PATH_BASE = './data/BaseTeacher'
 PATH_RANDOM = './data/RandomTeacher'
 SKILLS = [1, 5, 10, 15, 20, 25]
@@ -50,22 +50,31 @@ if __name__ == '__main__':
     timeToExam = 5
     nSkills = 1
     # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
-
-    c = Classroom(nSkills=nSkills,
-                  teacherModel=DQNTeacherAllHistoryRNN,
-                  studentModel=RashStudent,
-                  timeToExam=timeToExam,
-                  nStudents=100,
-                  gamma=0.99,
-                  epsilon=0.9,
-                  decay_epsilon=0.9992,
-                  learning_rate=0.05,
-                  min_eps=0.03,
-                  verbose=True,
-                  cnn=True)
-    c.run(timeToExam=timeToExam, minimalThreshold=(4, 0.5), numberOfIteration=1000, saveResults=True,
-          visualiseResults=True, savePlot=True)
-
+    path = './data/RandomTeacher/'
+    files = [path+'RashStudent__100_1__5__33__2022-1-8_16-7.csv',
+        path+'RashStudent__100_1__5__33__2022-1-8_16-8.csv',
+        path+'RashStudent__100_1__5__33__2022-1-8_16-9.csv',
+        path+'RashStudent__100_1__5__33__2022-1-8_16-10.csv',
+        path+'RashStudent__100_1__5__33__2022-1-8_16-11.csv',
+        path+'RashStudent__100_1__5__33__2022-1-8_16-12.csv'
+        ]
+    Plotter.plot_from_csv_with_std(files,path+'test.jpg', title='test')
+    # for i in range(10):
+    #     c = Classroom(nSkills=nSkills,
+    #                 teacherModel=RandomTeacher,
+    #                 studentModel=RashStudent,
+    #                 timeToExam=timeToExam,
+    #                 nStudents=100,
+    #                 gamma=0.99,
+    #                 epsilon=0.9,
+    #                 decay_epsilon=0.9992,
+    #                 learning_rate=0.05,
+    #                 min_eps=0.03,
+    #                 verbose=True,
+    #                 cnn=False)
+    #     c.run(timeToExam=timeToExam, numberOfIteration=33, saveResults=True,
+    #         visualiseResults=False, savePlot=False)
+    
     # create_base_line()
     # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
     # print(res[0].mark, res[0].isExam)

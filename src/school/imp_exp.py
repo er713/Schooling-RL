@@ -5,7 +5,7 @@ from os.path import isfile
 from . import Result
 
 
-def import_results(path: str) -> List[Result]:
+def ruimport_results(path: str) -> List[Result]:
     """
     Function for importing results
     :param path: Path to csv file
