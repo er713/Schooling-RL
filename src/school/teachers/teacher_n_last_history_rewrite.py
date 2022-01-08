@@ -19,7 +19,7 @@ class TeacherNLastHistory(TeacherRL, ABC):
         :param tasks: List of Tasks
         :param inverse_state: Bool, should state be in order: t-1, t-2, ...?
         """
-        super().__init__(nSkills, tasks, **kwargs)
+        super().__init__(nSkills, tasks, kwargs.pop('nStudents'), **kwargs)
         self.results = dict()
         if nLast:
             self.nLast = nLast
@@ -46,7 +46,7 @@ class TeacherNLastHistory(TeacherRL, ABC):
             self._receive_result_one_step(result, student, reward, last)
             if reward is not None:
                 self.results[student] = []  # remove student history after exam
-                super().receive_result(result)
+                super().receive_result(result, last=True)
 
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         """

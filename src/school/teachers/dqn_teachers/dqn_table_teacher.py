@@ -106,19 +106,18 @@ class DQNTableTeacher(TableTeacher):
 
 class DQNTeacherNLastHistory(TeacherNLastHistory):
 
-    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, nStudents: int, mem_size=1024, batch_size=64,
-                 cnn=False, verbose=False,
-                 **kwargs):
+    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, mem_size=1024, batch_size=64,
+                 cnn=False, **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, nLast, **kwargs)
         self.mem_size = mem_size
         self.batch_size = batch_size
         if not cnn:
-            self.estimator = Actor(self.nTasks, verbose=verbose)
-            self.targetEstimator = Actor(self.nTasks, verbose=verbose)
+            self.estimator = Actor(self.nTasks, verbose=self.verbose)
+            self.targetEstimator = Actor(self.nTasks, verbose=self.verbose)
         else:
-            self.estimator = ActorCNN(self.nTasks, verbose=verbose, nLast=nLast)
-            self.targetEstimator = ActorCNN(self.nTasks, verbose=verbose, nLast=nLast)
+            self.estimator = ActorCNN(self.nTasks, verbose=self.verbose, nLast=nLast)
+            self.targetEstimator = ActorCNN(self.nTasks, verbose=self.verbose, nLast=nLast)
         self.estimator_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         # self.estimator = DQN(modelInputSize)
         # self.targetEstimator = DQN(modelInputSize)

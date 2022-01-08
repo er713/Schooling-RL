@@ -40,6 +40,7 @@ class BaseTeacher(Teacher):
                 if curr_diff > max_diff:
                     max_diff = curr_diff
                     best_task = task
+        self.choices[best_task.id] += 1
         original_best_task = [task for task in self.originalTasks if task.id == best_task.id][0]
         return original_best_task
 

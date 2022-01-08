@@ -7,6 +7,7 @@ from datetime import datetime
 
 from . import Task, Result, Plotter, import_results, export_results
 from .imp_exp import export_improvements
+from .imp_exp import export_given_tasks
 from .students import Student
 from .teachers import Teacher, TeacherNLastHistory
 
@@ -44,7 +45,7 @@ class Classroom:
             for skill in range(nSkills):
                 for difficulty in range(-3, 4):
                     tasksSkillsDifficulties.append({skill: difficulty})
-
+        self.tasksSkillsDifficulties=tasksSkillsDifficulties
         # Task generating parameters
         self._minSkill: int = minSkill
         self._maxSkill: int = maxSkill
@@ -71,6 +72,10 @@ class Classroom:
         self._mean_proficiency={}
         #list of mean_proficiency from different iterations
         self._all_proficiency_improvements=[]
+        # how many times each task was given by teacher within iteration
+        self._given_tasks=self._empty_given_task_dict()
+        # list of self._given_tasks
+        self._all_given_tasks=[]
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
             self._ALL_ONE_BY_ONE: self._learning_loop_all_student,
@@ -105,6 +110,7 @@ class Classroom:
         """
         for student in self.students:
             for time in range(timeToExam):
+                # print(time == timeToExam - 1)
                 self._learn_student(student, last=(time == timeToExam - 1))
 
     def _learning_loop_all_student_parallel(self, timeToExam: int) -> None:
@@ -124,10 +130,21 @@ class Classroom:
         """
         if student.want_task():
             task = self.teacher.choose_task(student)
+            self._update_given_tasks(task)
             result = student.solve_task(task, isExam=isExam)
             self.results.append(result)
             self.teacher.receive_result(result, last=last)
 
+    def _update_given_tasks(self, task):
+        for skill, diff in task.taskDifficulties.items():
+            self._given_tasks[(skill, diff)]+= 1
+
+    def _empty_given_task_dict(self):
+        new_dict={}
+        for skill_diff in self.tasksSkillsDifficulties:
+            for skill, diff in skill_diff.items():
+                new_dict[(skill, diff)]=0
+        return new_dict
     def make_exam(self, examTasks: List[Task]) -> (float, float):
         """
         Function responsible for evaluation process
@@ -274,7 +291,10 @@ class Classroom:
         if plotter is not None:
             plotter.plot_learning_results(mark)
         if saveResults:
+            self._all_given_tasks.append(self._given_tasks)
+            self._given_tasks = self._empty_given_task_dict()
             self.export_results(forceDump=True)  # TODO: think about doing this on other thread due to longer disk I/O
+
         return mark, duration
 
     def _generate_tasks(self, tasksSkillsDifficulties: List[Optional[Dict[int, float]]]) -> List[Task]:
@@ -325,6 +345,8 @@ class Classroom:
             export_improvements(path+ "impr_"+self.exportFileName +'csv', self._all_proficiency_improvements)
             self._all_proficiency_improvements=[]
 
+            export_given_tasks(path+ "tasks_"+self.exportFileName +'csv', self._all_given_tasks)
+            self._all_given_tasks=[]
     def import_results(self, path: str = None, fileName: str = None) -> List[Result]:
         """
         Function for importing results

@@ -11,7 +11,9 @@ class RandomTeacher(Teacher):
         super().__init__(nSkills, tasks=tasks, **kwargs)
 
     def choose_task(self, student) -> Task:
-        return random.choice(self.tasks)
+        action = random.choice(self.tasks)
+        self.choices[action.id]
+        return action
 
     def receive_result(self, result, reward=None, last=False) -> None:
         pass

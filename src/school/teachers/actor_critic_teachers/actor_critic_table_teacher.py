@@ -18,7 +18,6 @@ class ActorCriticTableTeacher(TableTeacher):
                  nSkills: int,
                  tasks: List[Task],
                  cnn=False,
-                 verbose=False,
                  *args, **kwargs):
         """
         :param nSkills:Number of skills to learn
@@ -38,7 +37,7 @@ class ActorCriticTableTeacher(TableTeacher):
         self.nTasks = len(tasks)
         self.mem = None  # tuple as <state, action, reward, next_state, done>
         if not cnn:
-            self.actor = Actor(self.nTasks, verbose=verbose)
+            self.actor = Actor(self.nTasks, verbose=self.verbose)
             self.critic = Critic()
         else:
             raise NotImplementedError("CNN don't support table representation xDD")
@@ -47,7 +46,6 @@ class ActorCriticTableTeacher(TableTeacher):
             # self.critic = CriticCNN(nTasks=self.nTasks, nLast=nLast)
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.verbose = verbose
 
     def receive_result(self, result, last=False, reward=None) -> None:
         # Exam results need to be reduced in receive_exam_res
@@ -81,8 +79,8 @@ class ActorCriticTableTeacher(TableTeacher):
         action_probabilities = tfp.distributions.Categorical(logits=logits)
         action = action_probabilities.sample(sample_shape=())
 
-        if self.verbose:
-            print(action)
+        # if self.verbose:
+        #     print(action)
 
         action = [task_ for task_ in self.tasks if task_.id == action][0]
         return action

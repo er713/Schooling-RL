@@ -16,9 +16,7 @@ class ActorCriticNLastTeacher(TeacherNLastHistory):
                  nSkills: int,
                  tasks: List[Task],
                  nLast: int,
-                 nStudents: int,
                  cnn: bool = False,
-                 verbose: bool = False,
                  *args, **kwargs):
         """
         :param nSkills:Number of skills to learn
@@ -36,22 +34,21 @@ class ActorCriticNLastTeacher(TeacherNLastHistory):
         """
         super().__init__(nSkills, tasks, nLast, **kwargs)
         if not cnn:
-            self.actor = Actor(self.nTasks, verbose=verbose)
+            self.actor = Actor(self.nTasks, verbose=self.verbose)
             self.critic = Critic()
         else:
-            self.actor = ActorCNN(self.nTasks, verbose=verbose, nLast=nLast)
+            self.actor = ActorCNN(self.nTasks, verbose=self.verbose, nLast=nLast)
             self.critic = CriticCNN(nTasks=self.nTasks, nLast=nLast)
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.verbose = verbose
 
     def get_action(self, state):
         logits = self.actor(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
         action = action_probabilities.sample(sample_shape=())
 
-        if self.verbose:
-            print(action)
+        # if self.verbose:
+        #     print(action)
 
         action = [task_ for task_ in self.tasks if task_.id == action][0]
         return action

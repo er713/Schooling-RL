@@ -24,9 +24,9 @@ def export_results(path: str, results: List[Result]) -> None:
     Function for exporting results
     :param path: Path to csv file
     :param results: List with Results to export.
+    :param given_tasks: List of dictionaries of given_tasks within iteration
     """
     writeHeader = not isfile(path)
-
     with open(path, 'a') as file_csv:
         writer = csv.DictWriter(file_csv, dialect='unix', fieldnames=list(results[0].__dict__.keys()))
         if writeHeader:
@@ -43,3 +43,12 @@ def export_improvements(path: str, improvements: List[dict]):
         if writeHeader:
             writer.writeheader()
         writer.writerows(improvements)
+def export_given_tasks(path: str,  given_tasks: List[dict]) -> None:
+    writeHeader = not isfile(path)
+    with open(path, 'a') as file:
+        writer = csv.DictWriter(file, dialect='unix', fieldnames=given_tasks[0],
+                                quoting=csv.QUOTE_NONE, escapechar=' ')
+        if writeHeader:
+            writer.writeheader()
+        print([tasks for tasks in given_tasks])
+        writer.writerows([tasks for tasks in given_tasks])

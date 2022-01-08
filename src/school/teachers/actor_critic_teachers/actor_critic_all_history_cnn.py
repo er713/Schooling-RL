@@ -14,9 +14,7 @@ class ActorCriticAllHistoryCNNTeacher(TeacherAllHistory):
     def __init__(self,
                  nSkills: int,
                  tasks: List[Task],
-                 nStudents: int,
                  cnn: bool = False,
-                 verbose: bool = False,
                  task_embedding_size: int = 10,
                  base_history: int = 7,
                  filters: int = 5,
@@ -36,11 +34,6 @@ class ActorCriticAllHistoryCNNTeacher(TeacherAllHistory):
         self.actor_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         self.critic_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
-        self.nStudents = nStudents
-        self.verbose = verbose
-        # if verbose:
-        self.choices = np.zeros((self.nTasks,), dtype=np.int_)
-
     def get_action(self, state):
         logits = self.actor(state)
         action_probabilities = tfp.distributions.Categorical(logits=logits)
@@ -56,14 +49,6 @@ class ActorCriticAllHistoryCNNTeacher(TeacherAllHistory):
         return action
 
     def learn(self, state: List[int], action: int, next_state: List[int], reward: int, done: int) -> None:
-        if self.verbose:
-            self.iteration_st += 1
-            if self.iteration_st % (self.nStudents*10) == 0:
-                print(self.iteration_st)
-                print('epsilon:', self.epsilon)
-                print('variety:\n',
-                      np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
-                self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
 
         _learn_main(self.actor, self.critic, state, tf.constant(action), next_state,
                     tf.constant(1000 * reward + 0.001, dtype=tf.float32),

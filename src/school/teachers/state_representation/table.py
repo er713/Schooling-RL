@@ -27,7 +27,7 @@ class TableTeacher(TeacherRL):
         self.update_memory(result, last)
         if last:
             # update epsilon
-            super().receive_result(result)
+            super().receive_result(result, last=last)
             return
         # implementation specific learn
 
