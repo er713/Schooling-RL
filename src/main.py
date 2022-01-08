@@ -1,11 +1,11 @@
 """
 main file
 """
-from school import Classroom, Plotter, import_results
-from school.teachers import *
-from school.students import RashStudent
-import os
-
+# from school import Classroom, Plotter, import_results
+# from school.teachers import *
+# from school.students import RashStudent
+# import os
+from school import Plotter
 PATH_BASE = './data/BaseTeacher'
 PATH_RANDOM = './data/RandomTeacher'
 SKILLS = [1, 5, 10, 15, 20, 25]
