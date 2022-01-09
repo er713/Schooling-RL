@@ -9,11 +9,13 @@ from .. import TeacherAllHistoryRNN
 from ..models.actor_critic import *
 from .. import losses
 from ..models import RNNWrapper
+from ..constants import BATCH_SIZE, MEM_SIZE, TARGET_ITER, LEARN
+
 
 
 class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
 
-    def __init__(self, nSkills: int, tasks: List[Task], nStudents: int, mem_size=1024, batch_size=64,
+    def __init__(self, nSkills: int, tasks: List[Task], nStudents: int, mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
                  cnn=False, verbose=False, task_embedding_size: int = 5, rnn_units: int = None,
                  **kwargs):
         """Set parameters, initialize network."""
@@ -31,11 +33,12 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         self.estimator_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills * len(tasks)
+        self.noTargetIte = TARGET_ITER
         self.__targetCounter = 0
 
         self.verbose = verbose
         self.choices = np.zeros((self.nTasks,), dtype=np.int_)
+        self.__learnCounter = 0
 
     def get_action(self, state):
         logits, st = self.estimator.get_specific_call(state[0], state[1])

@@ -1,4 +1,6 @@
 from typing import List
+
+from ..constants import BATCH_SIZE, MEM_SIZE, TARGET_ITER, LEARN
 from ...task import Task
 from ..losses import dqn_loss
 import numpy as np
@@ -13,7 +15,7 @@ from ..layers import AllHistoryCNN, EmbeddedTasks
 
 class DQNTeacherAllHistoryCNN(TeacherAllHistory):
 
-    def __init__(self, nSkills: int, tasks: List[Task], mem_size=1024, batch_size=64,
+    def __init__(self, nSkills: int, tasks: List[Task], mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
                  cnn=False, filters: int = 5, task_embedding_size: int = 5, base_history: int = 5,
                  **kwargs):
         """Set parameters, initialize network."""
@@ -36,8 +38,9 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         # self.estimator = DQN(modelInputSize)
         # self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills * len(tasks)
+        self.noTargetIte = TARGET_ITER
         self.__targetCounter = 0
+        self.__learnCounter = 0
 
     def get_action(self, state):
         logits = self.estimator(state)

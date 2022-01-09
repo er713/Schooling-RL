@@ -1,11 +1,12 @@
 """
 main file
 """
-# from school import Classroom, Plotter, import_results
-# from school.teachers import *
-# from school.students import RashStudent
-# import os
-from school import Plotter
+from school import Classroom, Plotter
+from school.teachers import *
+from school.students import RashStudent
+import os
+import argparse
+
 PATH_BASE = './data/BaseTeacher'
 PATH_RANDOM = './data/RandomTeacher'
 SKILLS = [1, 5, 10, 15, 20, 25]
@@ -45,39 +46,38 @@ def create_base_line():
     draw_all_on_one_by_skills()
     draw_all_plots_separately()
 
+def parseArguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-iter', type=int, default=600, help="Number of iteration")
+    parser.add_argument('-skills', type=int, default=1, help="Number of skills")
+    parser.add_argument('-teacher', type=int, default=0, help="Choose teacher")
+    parser.add_argument('-visualize', type=int, default=0, help="Visualize")
+    # parser.add_argument('-verbose', type=int, default=0, help="Verbose")
+    # parser.add_argument('-cnn', type=int, default=0, help="Use cnn? 0-1")
+
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    timeToExam = 5
-    nSkills = 3
-    # c = Classroom(1, RandomTeacher, RashStudent, nStudents=100, estimateDifficulty=False)
-    file = f"./data/RandomTeacher/impr_RashStudent__100_3__5__3__2022-1-8_15-26.csv"
-    Plotter.draw_student_progress(file)
-    file = f"./data/RandomTeacher/tasks_RashStudent__100_1__10__3__2022-1-8_14-31.csv"
-    Plotter.draw_tasks_distribution(file)
-
-    # c = Classroom(nSkills=nSkills,
-    #               teacherModel=RandomTeacher,
-    #               studentModel=RashStudent,
-    #               timeToExam=timeToExam,
-    #               nStudents=100,
-    #               gamma=0.99,
-    #               epsilon=0.9,
-    #               decay_epsilon=0.9992,
-    #               learning_rate=0.05,
-    #               min_eps=0.03,
-    #               verbose=True,
-    #               cnn=False)
-    # c.run(timeToExam=timeToExam, numberOfIteration=3, saveResults=True,
-    #       visualiseResults=True, savePlot=True)
-    #               min_eps=0.04,
-    #               # nLast=timeToExam,
-    #               verbose=True,
-    #               cnn=True)
-    # c.run(timeToExam=timeToExam, numberOfIteration=3, saveResults=True, visualiseResults=True, savePlot=True)
-
-    # create_base_line()
-    # res = import_results('./data/RandomTeacher/RashStudent__100_7__2021-10-30_23-39.csv')
-    # print(res[0].mark, res[0].isExam)
-
-    # Plotter.plot_from_csv('./data/RandomTeacher/RashStudent__100_7__2021-11-26_22-4.csv',
-    #                       './data/RandomTeacher/RashStudent__100_7__2021-10-31_2-40.png')
+    parsed_args = parseArguments()
+    print(parsed_args)
+    timeToExam = 6
+    numberOfIteration = parsed_args.iter
+    nSkills = parsed_args.skills
+    teacher = BaseTeacher
+    if parsed_args.teacher == 1:
+        teacher = DQNTableTeacher
+    elif parsed_args.teacher == 2:
+        teacher = DQNTeacherNLastHistory
+    elif parsed_args.teacher == 3:
+        teacher = DQNTeacherAllHistoryRNN
+    elif parsed_args.teacher == 4:
+        teacher = ActorCriticTableTeacher
+    elif parsed_args.teacher == 5:
+        teacher = ActorCriticNLastTeacher
+    elif parsed_args.teacher == 6:
+        teacher = ActorCriticAllHistoryRNNTeacher
+    c = Classroom(nSkills=nSkills,timeToExam=timeToExam*nSkills, teacherModel=teacher, studentModel=RashStudent, nStudents=100, verbose=True, cnn=False)
+    if parsed_args.visualize:
+        c.run(timeToExam=timeToExam*nSkills, numberOfIteration=numberOfIteration, saveResults=True, visualiseResults=True, savePlot=False)
+    else:
+        c.run(timeToExam=timeToExam*nSkills, numberOfIteration=numberOfIteration, saveResults=True, visualiseResults=False, savePlot=False)

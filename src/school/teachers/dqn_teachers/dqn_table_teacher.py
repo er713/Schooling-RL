@@ -1,3 +1,4 @@
+from ..constants import MEM_SIZE, BATCH_SIZE, TARGET_ITER, LEARN
 from ..state_representation import TableTeacher
 from typing import List
 from ...task import Task
@@ -18,7 +19,7 @@ from .. import losses
 class DQNTableTeacher(TableTeacher):
     """Deep Q-learning agent."""
 
-    def __init__(self, nSkills: int, tasks: List[Task], mem_size=4096, batch_size=1024,
+    def __init__(self, nSkills: int, tasks: List[Task], mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
                  **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, **kwargs)
@@ -29,8 +30,9 @@ class DQNTableTeacher(TableTeacher):
         self.estimator = DQN(modelInputSize)
         self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills * len(tasks) * self.time_to_exam
+        self.noTargetIte = TARGET_ITER
         self.__targetCounter = 0
+        self.__learnCounter = LEARN
 
     def get_action(self, state):
         task_id = tf.argmax(self.estimator(state)[0]).numpy()
@@ -49,21 +51,24 @@ class DQNTableTeacher(TableTeacher):
             self.learn()
 
     def learn(self):
-        states, actions, rewards, next_states, dones = self.mem.sample()
-        real_q = []
-        states_buff = []
-        actions_buff = []
+        if LEARN == self.__learnCounter:
+            self.__learnCounter = 0
+            states, actions, rewards, next_states, dones = self.mem.sample()
+            real_q = []
+            states_buff = []
+            actions_buff = []
 
-        for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-            if d:
-                real_q.append(tf.constant([r], dtype=tf.float32))
-            else:
-                next_state = tf.expand_dims(tf.constant(ns), axis=0)
-                real_q.append(r + self.gamma * self.__get_target_q(next_state)[0])
-            states_buff.append(s)
-            actions_buff.append((i, a))
-        self.estimator.train_step(tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q))
-
+            for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
+                if d:
+                    real_q.append(tf.constant([r], dtype=tf.float32))
+                else:
+                    next_state = tf.expand_dims(tf.constant(ns), axis=0)
+                    real_q.append(r + self.gamma * self.__get_target_q(next_state)[0])
+                states_buff.append(s)
+                actions_buff.append((i, a))
+            self.estimator.train_step(tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q))
+        self.__learnCounter += 1
+        
     def update_memory(self, result: Result, last: bool):
         # last exam task
         if last and result.isExam:
@@ -106,7 +111,7 @@ class DQNTableTeacher(TableTeacher):
 
 class DQNTeacherNLastHistory(TeacherNLastHistory):
 
-    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, mem_size=1024, batch_size=64,
+    def __init__(self, nSkills: int, tasks: List[Task], nLast: int, mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
                  cnn=False, **kwargs):
         """Set parameters, initialize network."""
         super().__init__(nSkills, tasks, nLast, **kwargs)
@@ -122,8 +127,9 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         # self.estimator = DQN(modelInputSize)
         # self.targetEstimator = DQN(modelInputSize)
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
-        self.noTargetIte = nSkills * len(tasks)
+        self.noTargetIte = TARGET_ITER
         self.__targetCounter = 0
+        self.__learnCounter = 0
 
     def get_action(self, state):
         logits = self.estimator(state)
@@ -139,13 +145,15 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         # copy estimator weights to target estimator after noTargetIte iterations
 
     def learn(self):
-        states, actions, rewards, next_states, dones = self.mem.sample()
+        if LEARN == self.__learnCounter:
+            self.__learnCounter = 0
+            states, actions, rewards, next_states, dones = self.mem.sample()
 
-        for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-            self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                             next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
-                             done=tf.constant(d, dtype=tf.float32))
-
+            for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
+                self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
+                                next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+                                done=tf.constant(d, dtype=tf.float32))
+        self.__learnCounter += 1
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:
             done = 0
