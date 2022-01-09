@@ -14,7 +14,7 @@ class ActorCriticAllHistoryRNNTeacher(TeacherAllHistoryRNN):
     def __init__(self,
                  nSkills: int,
                  tasks: List[Task],
-                 nStudents: int,
+                 # nStudents: int,
                  cnn: bool = False,
                  verbose: bool = False,
                  task_embedding_size: int = 10,
@@ -30,7 +30,7 @@ class ActorCriticAllHistoryRNNTeacher(TeacherAllHistoryRNN):
 
         self.ac_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         # self.critic_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-        self.nStudents = nStudents
+        # self.nStudents = nStudents
         self.verbose = verbose
         # if verbose:
         self.choices = np.zeros((self.nTasks,), dtype=np.int_)
