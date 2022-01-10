@@ -17,11 +17,13 @@ class ActorCriticAllHistoryRNNTeacher(TeacherAllHistoryRNN):
                  # nStudents: int,
                  cnn: bool = False,
                  verbose: bool = False,
-                 task_embedding_size: int = 10,
+                 task_embedding_size: int = None,
                  rnn_units: int = None,
                  *args, **kwargs):
         if rnn_units is None:
-            rnn_units = len(tasks) // 7
+            rnn_units = max(3 * nSkills, 5)
+        if task_embedding_size is None:
+            task_embedding_size = np.ceil(len(tasks)*0.6)
         super().__init__(nSkills, tasks, task_embedding_size, rnn_units, **kwargs)
 
         self._actor = Actor(self.nTasks)

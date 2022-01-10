@@ -23,8 +23,8 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         # self.nStudents = nStudents
         self.mem_size = mem_size
         self.batch_size = batch_size
-        self._estimator = Actor(self.nTasks, verbose=verbose)
-        self._targetEstimator = Actor(self.nTasks, verbose=verbose)
+        self._estimator = Actor(self.nTasks, verbose=self.verbose)
+        self._targetEstimator = Actor(self.nTasks, verbose=self.verbose)
         self.estimator = tf.keras.Sequential([
             self.embedding_for_tasks,
             AllHistoryCNN(self.task_embedding_size, self.base_history, filters),

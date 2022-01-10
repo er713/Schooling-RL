@@ -15,14 +15,16 @@ from ..constants import BATCH_SIZE, MEM_SIZE, TARGET_ITER, LEARN
 
 class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
 
-    def __init__(self, nSkills: int, tasks: List[Task], nStudents: int, mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
-                 cnn=False, verbose=False, task_embedding_size: int = 5, rnn_units: int = None,
+    def __init__(self, nSkills: int, tasks: List[Task], mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
+                 cnn=False, verbose=False, task_embedding_size: int = None, rnn_units: int = None,
                  **kwargs):
         """Set parameters, initialize network."""
         if rnn_units is None:
-            rnn_units = len(tasks) // 7
+            rnn_units = max(3 * nSkills, 5)
+        if task_embedding_size is None:
+            task_embedding_size = np.ceil(len(tasks) * 0.6)
         super().__init__(nSkills, tasks, task_embedding_size, rnn_units, **kwargs)
-        self.nStudents = nStudents
+        # self.nStudents = nStudents
         self.mem_size = mem_size
         self.batch_size = batch_size
 
