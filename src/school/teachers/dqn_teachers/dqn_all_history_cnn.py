@@ -57,11 +57,14 @@ class DQNTeacherAllHistoryCNN(TeacherAllHistory):
         # copy estimator weights to target estimator after noTargetIte iterations
 
     def learn(self):
-        states, actions, rewards, next_states, dones = self.mem.sample()
-        for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-            self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                             next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
-                             done=tf.constant(d, dtype=tf.float32))
+        if LEARN == self.__learnCounter:
+            self.__learnCounter = 0
+            states, actions, rewards, next_states, dones = self.mem.sample()
+            for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
+                self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
+                                next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+                                done=tf.constant(d, dtype=tf.float32))
+        self.__learnCounter += 1
 
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:

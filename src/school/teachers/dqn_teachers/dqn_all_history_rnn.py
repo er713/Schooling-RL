@@ -58,20 +58,23 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         # copy estimator weights to target estimator after noTargetIte iterations
 
     def learn(self):
-        states, actions, rewards, next_states, dones = self.mem.sample()
-        # reward = 1000*reward + 0.001
-        if self.verbose:
-            self.iteration_st += 1
-            if self.iteration_st % (self.nStudents * 10) == 0:
-                print(self.iteration_st)
-                print('epsilon:', self.epsilon)
-                print('variety:\n',
-                      np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
-                self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
-        for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-            self._learn_main(state=s, action=a,
-                             next_state=ns, reward=tf.constant(r, dtype=tf.float32),
-                             done=tf.constant(d, dtype=tf.float32))
+        if LEARN == self.__learnCounter:
+            self.__learnCounter = 0
+            states, actions, rewards, next_states, dones = self.mem.sample()
+            # reward = 1000*reward + 0.001
+            if self.verbose:
+                self.iteration_st += 1
+                if self.iteration_st % (self.nStudents * 10) == 0:
+                    print(self.iteration_st)
+                    print('epsilon:', self.epsilon)
+                    print('variety:\n',
+                        np.reshape(self.choices, (self.choices.shape[0] // 7, 7)))
+                    self.choices = np.zeros((len(self.tasks),), dtype=np.int_)
+            for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
+                self._learn_main(state=s, action=a,
+                                next_state=ns, reward=tf.constant(r, dtype=tf.float32),
+                                done=tf.constant(d, dtype=tf.float32))
+        self.__learnCounter += 1
 
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:
