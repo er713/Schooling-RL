@@ -28,8 +28,8 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         self.mem_size = mem_size
         self.batch_size = batch_size
 
-        self._estimator = Actor(self.nTasks, verbose=self.verbose)
-        self._targetEstimator = Actor(self.nTasks, verbose=self.verbose)
+        self._estimator = Actor(self.nTasks, verbose=self.verbose, batch_norm=True)
+        self._targetEstimator = Actor(self.nTasks, verbose=self.verbose, batch_norm=True)
         self.estimator = RNNWrapper(self.rnn_units, self.nTasks, task_embedding_size, [self._estimator])
         self.targetEstimator = RNNWrapper(self.rnn_units, self.nTasks, task_embedding_size, [self._targetEstimator])
         self.estimator_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
