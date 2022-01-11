@@ -28,8 +28,8 @@ class Actor(tf.keras.Model):
 
     @tf.function
     def call(self, state):
-        if self.verbose:
-            print("State: ", state)
+        # if self.verbose:
+        #     print("State: ", state)
         return self.model(state)
         
     def copy_weights(self, otherModel):

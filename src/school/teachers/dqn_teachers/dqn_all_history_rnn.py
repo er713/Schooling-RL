@@ -22,7 +22,7 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         if rnn_units is None:
             rnn_units = max(3 * nSkills, 5)
         if task_embedding_size is None:
-            task_embedding_size = np.ceil(len(tasks) * 0.6)
+            task_embedding_size = int(np.ceil(len(tasks) * 0.6))
         super().__init__(nSkills, tasks, task_embedding_size, rnn_units, **kwargs)
         # self.nStudents = nStudents
         self.mem_size = mem_size
