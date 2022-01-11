@@ -16,7 +16,7 @@ from ..constants import BATCH_SIZE, MEM_SIZE, TARGET_ITER, LEARN
 class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
 
     def __init__(self, nSkills: int, tasks: List[Task], mem_size=MEM_SIZE, batch_size=BATCH_SIZE,
-                 cnn=False, verbose=False, task_embedding_size: int = None, rnn_units: int = None,
+                 cnn=False, task_embedding_size: int = None, rnn_units: int = None,
                  **kwargs):
         """Set parameters, initialize network."""
         if rnn_units is None:
@@ -28,8 +28,8 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         self.mem_size = mem_size
         self.batch_size = batch_size
 
-        self._estimator = Actor(self.nTasks, verbose=verbose)
-        self._targetEstimator = Actor(self.nTasks, verbose=verbose)
+        self._estimator = Actor(self.nTasks, verbose=self.verbose)
+        self._targetEstimator = Actor(self.nTasks, verbose=self.verbose)
         self.estimator = RNNWrapper(self.rnn_units, self.nTasks, task_embedding_size, [self._estimator])
         self.targetEstimator = RNNWrapper(self.rnn_units, self.nTasks, task_embedding_size, [self._targetEstimator])
         self.estimator_opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
@@ -38,7 +38,7 @@ class DQNTeacherAllHistoryRNN(TeacherAllHistoryRNN):
         self.noTargetIte = TARGET_ITER
         self.__targetCounter = 0
 
-        self.verbose = verbose
+        self.verbose = self.verbose
         self.choices = np.zeros((self.nTasks,), dtype=np.int_)
         self.__learnCounter = 0
 
