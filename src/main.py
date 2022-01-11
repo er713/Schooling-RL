@@ -76,7 +76,7 @@ if __name__ == '__main__':
         teacher = ActorCriticNLastTeacher
     elif parsed_args.teacher == 6:
         teacher = ActorCriticAllHistoryRNNTeacher
-    c = Classroom(nSkills=nSkills,timeToExam=timeToExam*nSkills, teacherModel=teacher, studentModel=RashStudent, nStudents=100, verbose=True, cnn=False)
+    c = Classroom(nSkills=nSkills,timeToExam=timeToExam*nSkills, teacherModel=teacher, studentModel=RashStudent, nStudents=100, nLast=4*nSkills, verbose=True, cnn=False)
     if parsed_args.visualize:
         c.run(timeToExam=timeToExam*nSkills, numberOfIteration=numberOfIteration, saveResults=True, visualiseResults=True, savePlot=False)
     else:
