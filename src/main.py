@@ -46,6 +46,7 @@ def create_base_line():
     draw_all_on_one_by_skills()
     draw_all_plots_separately()
 
+
 def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-iter', type=int, default=600, help="Number of iteration")
@@ -56,6 +57,7 @@ def parseArguments():
     # parser.add_argument('-cnn', type=int, default=0, help="Use cnn? 0-1")
 
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     parsed_args = parseArguments()
@@ -76,8 +78,11 @@ if __name__ == '__main__':
         teacher = ActorCriticNLastTeacher
     elif parsed_args.teacher == 6:
         teacher = ActorCriticAllHistoryRNNTeacher
-    c = Classroom(nSkills=nSkills,timeToExam=timeToExam*nSkills, teacherModel=teacher, studentModel=RashStudent, nStudents=100, nLast=4*nSkills, verbose=True, cnn=False)
+    c = Classroom(nSkills=nSkills, timeToExam=timeToExam * nSkills, teacherModel=teacher, studentModel=RashStudent,
+                  nStudents=100, nLast=4 * nSkills, verbose=True, cnn=False)
     if parsed_args.visualize:
-        c.run(timeToExam=timeToExam*nSkills, numberOfIteration=numberOfIteration, saveResults=True, visualiseResults=True, savePlot=False)
+        c.run(timeToExam=timeToExam * nSkills, numberOfIteration=numberOfIteration, saveResults=True,
+              visualiseResults=True, savePlot=False)
     else:
-        c.run(timeToExam=timeToExam*nSkills, numberOfIteration=numberOfIteration, saveResults=True, visualiseResults=False, savePlot=False)
+        c.run(timeToExam=timeToExam * nSkills, numberOfIteration=numberOfIteration, saveResults=True,
+              visualiseResults=False, savePlot=False)

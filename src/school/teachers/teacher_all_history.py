@@ -20,6 +20,7 @@ class TeacherAllHistory(TeacherNLastHistory, ABC):
 
 class TeacherAllHistoryRNN(TeacherNLastHistory, ABC):
     def __init__(self, nSkills: int, tasks: List[Task], task_embedding_size: int = 5, rnn_units: int = 5, **kwargs):
+        del kwargs['nLast']
         super().__init__(nSkills, tasks, None, None, **kwargs)
 
         self.task_embedding_size = task_embedding_size
