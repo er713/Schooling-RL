@@ -148,12 +148,30 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         if LEARN == self.__learnCounter:
             self.__learnCounter = 0
             states, actions, rewards, next_states, dones = self.mem.sample()
-
+            real_q = []
+            states_buff = []
+            actions_buff = []
             for i, (r, d, ns, a, s) in enumerate(zip(rewards, dones, next_states, actions, states)):
-                self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                                next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
-                                done=tf.constant(d, dtype=tf.float32))
+                if d:
+                    real_q.append(tf.constant([r], dtype=tf.float32))
+                else:
+                    next_state = tf.expand_dims(tf.constant(ns), axis=0)
+                    real_q.append(r + self.gamma * self.__get_target_q(next_state)[0])
+                states_buff.append(s)
+                actions_buff.append((i, a))
+            print(states_buff)
+            print(( type (states_buff)))
+            print(states_buff.shape)
+            print(len(states_buff))
+            # print(tf.constant(states_buff))
+            exit(0)
+            # (), (real_q))
+            # self.estimator.train_step(tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q))
         self.__learnCounter += 1
+                # self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
+                #                 next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+                #                 done=tf.constant(d, dtype=tf.float32))
+        # self.__learnCounter += 1
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:
             done = 0
@@ -186,6 +204,14 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
         estimator_grads = estimator_tape.gradient(estimator_loss, self.estimator.trainable_variables)
 
         self.estimator_opt.apply_gradients(zip(estimator_grads, self.estimator.trainable_variables))
+
+    @tf.function
+    def __get_target_q(self, state: tf.Tensor):
+        modelOutput = self.estimator(state)
+        bestActionIdx = tf.expand_dims(tf.argmax(modelOutput, axis=1), axis=1)
+        targetQVector = self.targetEstimator(state)
+        targetQ = tf.gather(targetQVector, bestActionIdx, axis=1, batch_dims=1)
+        return targetQ
 
     def __update_target(self):
         """

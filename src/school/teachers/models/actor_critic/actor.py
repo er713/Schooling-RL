@@ -47,3 +47,13 @@ class Actor(tf.keras.Model):
         for idx, layer in enumerate(model.layers):
             weights = layer.get_weights()
             self.model.layers[idx].set_weights(weights)
+    @tf.function
+    def train_step(self, states, actions, realQs):
+        print("Retracing train_stepa@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        with tf.GradientTape() as tape:
+            qPred=self(states, training=True)
+            qPred=tf.gather_nd(qPred, actions)
+            lossValue = self.loss(realQs, qPred)
+        variables = self.model.trainable_variables
+        grads=tape.gradient(lossValue, variables)
+        self.optimizer.apply_gradients(zip(grads, variables))        
