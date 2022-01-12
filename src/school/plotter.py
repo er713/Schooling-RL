@@ -286,11 +286,10 @@ class Plotter:
     @staticmethod
     def draw_student_progress(path):
         df = pd.read_csv(path,header=None,skiprows=[0])
-        
+
         fig = plt.figure()
-        plt.plot(df, label=df.columns )
         plt.plot(np.mean(df,axis=1),label='Średnia zmiana')
-        plt.title('Progres studentw')
+        plt.title('Progres studentów')
         plt.xlabel('Numer egzaminu')
         plt.ylabel('Zmiana poziomu')
         plt.legend()
