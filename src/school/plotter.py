@@ -96,8 +96,8 @@ class Plotter:
         results = []
         for file in files:
             results.append(Result.get_exams_means(import_results(file)))
-        m = np.mean(results,axis=1)
-        std = np.std(results,axis=1)
+        m = np.mean(results,axis=0)
+        std = np.std(results,axis=0)
         fig = plt.figure()
         plt.plot(m)
         plt.fill_between(range(len(m)),m+std,m-std, alpha=.2)
