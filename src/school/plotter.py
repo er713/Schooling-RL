@@ -8,14 +8,14 @@ from . import import_results, Result
 import numpy as np
 import pandas as pd
 
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["#330000", "#333300", "#003300",
-    "#003333", "#000033", "#330033", "#000000", "#663300", "#336600", "#006633",
+mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=[ "#330000", "#B2FF66", "#FF99FF",
+    "#A0A0A0", "#FF007F","#003333", "#B2FF66", "#000033", "#330033", "#000000", "#663300", "#336600", "#006633",
     "#003366", "#330066", "#660033", "#990000", "#999900", "#009900", "#009999",
     "#000099", "#990099", "#404040", "#CC6600", "#66CC00", "#00CC66", "#0066CC",
     "#6600CC", "#606060", "#FF8000", "#80FF00", "#00FF80", "#0080FF", "#7F00FF",
     "#FF007F", "#FF3333", "#FFFF33", "#33FF33", "#33FFFF", "#3333FF", "#FF33FF",
-    "#A0A0A0", "#FFB266", "#B2FF66", "#66FFB2", "#66B2FF", "#B266FF", "#FF66B2",
-    "#FF9999", "#FFFF99", "#99FF99", "#99FFFF", "#9999FF", "#FF99FF", "#E0E0E0", 
+     "#FFB266", "#B2FF66", "#66FFB2", "#66B2FF", "#B266FF", "#FF66B2",
+    "#FF9999", "#FFFF99", "#99FF99", "#99FFFF", "#9999FF",  "#E0E0E0", 
     "#FFE5CC","#E5FFCC",  "#CCFFE5", "#CCE5FF", "#FFCCFF"]) 
 class Plotter:
     """
