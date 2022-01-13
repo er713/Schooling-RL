@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import BatchNormalization, LayerNormalization
 import numpy as np
+from ...losses.actor_loss import actor_batch_loss
 
 
 class Actor(tf.keras.Model):
@@ -47,13 +48,16 @@ class Actor(tf.keras.Model):
         for idx, layer in enumerate(model.layers):
             weights = layer.get_weights()
             self.model.layers[idx].set_weights(weights)
-    @tf.function
+
+    # @tf.function
     def train_step(self, states, actions, realQs):
         print("Retracing train_stepa@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        print("!!!!!!!!!!state", states, states.shape)
+        print("!!!!!!!!!!!real!", realQs, realQs.shape)
         with tf.GradientTape() as tape:
-            qPred=self(states, training=True)
-            qPred=tf.gather_nd(qPred, actions)
-            lossValue = self.loss(realQs, qPred)
+            qPred = self(states, training=True)
+            # qPred = tf.gather_nd(qPred, actions)
+            lossValue = actor_batch_loss(qPred, actions, realQs)
         variables = self.model.trainable_variables
-        grads=tape.gradient(lossValue, variables)
-        self.optimizer.apply_gradients(zip(grads, variables))        
+        grads = tape.gradient(lossValue, variables)
+        self.optimizer.apply_gradients(zip(grads, variables))

@@ -1,3 +1,5 @@
+import numpy as np
+
 from ..constants import MEM_SIZE, BATCH_SIZE, TARGET_ITER, LEARN
 from ..state_representation import TableTeacher
 from typing import List
@@ -68,7 +70,7 @@ class DQNTableTeacher(TableTeacher):
                 actions_buff.append((i, a))
             self.estimator.train_step(tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q))
         self.__learnCounter += 1
-        
+
     def update_memory(self, result: Result, last: bool):
         # last exam task
         if last and result.isExam:
@@ -160,18 +162,27 @@ class DQNTeacherNLastHistory(TeacherNLastHistory):
                 states_buff.append(s)
                 actions_buff.append((i, a))
             print(states_buff)
-            print(( type (states_buff)))
-            print(states_buff.shape)
+            print((type(states_buff)))
+            # print(states_buff.shape)
             print(len(states_buff))
             # print(tf.constant(states_buff))
-            exit(0)
+            # exit(0)
             # (), (real_q))
-            # self.estimator.train_step(tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q))
+
+            a1 = tf.constant(np.asarray(states_buff))
+            # print(a1)
+            a2 = tf.constant(actions_buff)
+            # print(a2)
+            print(real_q)
+            a3 = tf.constant(np.asarray(real_q))
+            print(a3)
+            self.estimator.train_step(a1, a2, a3)
         self.__learnCounter += 1
-                # self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
-                #                 next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
-                #                 done=tf.constant(d, dtype=tf.float32))
+        # self._learn_main(state=tf.constant(s, dtype=tf.float32), action=tf.constant(a, dtype=tf.float32),
+        #                 next_state=tf.constant(ns, dtype=tf.float32), reward=tf.constant(r, dtype=tf.float32),
+        #                 done=tf.constant(d, dtype=tf.float32))
         # self.__learnCounter += 1
+
     def _receive_result_one_step(self, result, student, reward=None, last=False) -> None:
         if reward is None:
             done = 0

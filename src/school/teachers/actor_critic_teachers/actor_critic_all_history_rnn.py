@@ -82,7 +82,7 @@ def _learn_main(ac: tf.keras.Model, state: tf.Tensor, action: tf.Tensor,
         δ = reward + gamma * q_next * (1 - done) - q  # this works w/o tf.function
         # δ = float(reward) + float(gamma * q_next * (1 - done)) - float(q)  # float only for tf.function
 
-        actor_loss = losses.actor_loss(logits, action, δ)
+        actor_loss = losses.actor_loss3(logits, action, δ)
         critic_loss = δ ** 2  # MSE?
 
     variables = ac.get_specific_variables(1)

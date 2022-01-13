@@ -45,7 +45,7 @@ class Classroom:
             for skill in range(nSkills):
                 for difficulty in range(-3, 4):
                     tasksSkillsDifficulties.append({skill: difficulty})
-        self.tasksSkillsDifficulties=tasksSkillsDifficulties
+        self.tasksSkillsDifficulties = tasksSkillsDifficulties
         # Task generating parameters
         self._minSkill: int = minSkill
         self._maxSkill: int = maxSkill
@@ -68,14 +68,14 @@ class Classroom:
             self.now = datetime.now()
         else:
             self.now = now
-        #skill: mean_proficiency of all students
-        self._mean_proficiency={}
-        #list of mean_proficiency from different iterations
-        self._all_proficiency_improvements=[]
+        # skill: mean_proficiency of all students
+        self._mean_proficiency = {}
+        # list of mean_proficiency from different iterations
+        self._all_proficiency_improvements = []
         # how many times each task was given by teacher within iteration
-        self._given_tasks=self._empty_given_task_dict()
+        self._given_tasks = self._empty_given_task_dict()
         # list of self._given_tasks
-        self._all_given_tasks=[]
+        self._all_given_tasks = []
         self._learning_types = {  # only for choosing method in learning_loop
             self._SINGLE_STUDENT: self._learning_loop_single_student,
             self._ALL_ONE_BY_ONE: self._learning_loop_all_student,
@@ -137,14 +137,15 @@ class Classroom:
 
     def _update_given_tasks(self, task):
         for skill, diff in task.taskDifficulties.items():
-            self._given_tasks[(skill, diff)]+= 1
+            self._given_tasks[(skill, diff)] += 1
 
     def _empty_given_task_dict(self):
-        new_dict={}
+        new_dict = {}
         for skill_diff in self.tasksSkillsDifficulties:
             for skill, diff in skill_diff.items():
-                new_dict[(skill, diff)]=0
+                new_dict[(skill, diff)] = 0
         return new_dict
+
     def make_exam(self, examTasks: List[Task]) -> (float, float):
         """
         Function responsible for evaluation process
@@ -214,13 +215,27 @@ class Classroom:
             self._run_minimal_threshold(timeToExam, learningType, minimalThreshold[0], minimalThreshold[1], examTasks,
                                         saveResults=saveResults, plotter=plotter)
         else:
+            slip = False
             for epoch in range(numberOfIteration):
                 result, _ = self._run_single_learning(timeToExam, learningType, examTasks, saveResults, plotter)
+                # eps = self.teacher.epsilon
+                # if result < 0.21:
+                #     if slip:
+                #         self.teacher.epsilon = max(eps, 0.99)
+                #         slip = False
+                #     else:
+                #         slip = True
+                # elif result < 0.28:
+                #     self.teacher.epsilon = max(eps, 0.05)
                 print(f"Epoch: {epoch}, mean score on exam: {result}")
+                # print(self.teacher.ac.task_embeddings.variables)
+                # print(self.teacher.ac.h01.variables, self.teacher.ac.h02.variables)
+                # print(self.teacher.ac.task_embeddings.null_mark_emb.variables)
         if savePlot:
             makedirs(f"./data/{self.teacher}/", exist_ok=True)
             plotter.plot_learning_save(f"./data/{self.teacher}/" + self.exportFileName + 'png')
             plotter.dump_results_to_csv(f"./data/{self.teacher}/" + self.exportFileName + 'csv')
+
     def _run_minimal_improvement(self, timeToExam: int, learningType: str, nEpoch: int, minImprovement: float,
                                  examTasks: List[Task], saveResults: bool = True, plotter: Plotter = None) -> None:
         """
@@ -342,11 +357,12 @@ class Classroom:
 
             export_results(path + self.exportFileName + 'csv', self.results)
             self.results = []
-            export_improvements(path+ "impr_"+self.exportFileName +'csv', self._all_proficiency_improvements)
-            self._all_proficiency_improvements=[]
+            export_improvements(path + "impr_" + self.exportFileName + 'csv', self._all_proficiency_improvements)
+            self._all_proficiency_improvements = []
 
-            export_given_tasks(path+ "tasks_"+self.exportFileName +'csv', self._all_given_tasks)
-            self._all_given_tasks=[]
+            export_given_tasks(path + "tasks_" + self.exportFileName + 'csv', self._all_given_tasks)
+            self._all_given_tasks = []
+
     def import_results(self, path: str = None, fileName: str = None) -> List[Result]:
         """
         Function for importing results
@@ -362,19 +378,20 @@ class Classroom:
 
         return import_results(path + fileName)
 
-    def  _update_mean_proficiency(self):
-        self._mean_proficiency={}
+    def _update_mean_proficiency(self):
+        self._mean_proficiency = {}
         for skill in range(self.nSkills):
-            self._mean_proficiency[skill]=np.mean([s._proficiency[skill] for s in self.students])
+            self._mean_proficiency[skill] = np.mean([s._proficiency[skill] for s in self.students])
         return self._mean_proficiency
 
     def _add_proficiency_improvement(self):
-        start_prof=self._mean_proficiency
-        improvement={}
-        curr_prof=self._update_mean_proficiency()
+        start_prof = self._mean_proficiency
+        improvement = {}
+        curr_prof = self._update_mean_proficiency()
         for skill in range(self.nSkills):
-            improvement[skill]=curr_prof[skill]-start_prof[skill]
+            improvement[skill] = curr_prof[skill] - start_prof[skill]
         self._all_proficiency_improvements.append(improvement)
+
 
 if __name__ == "__main__":
     c = Classroom(7, Teacher, Student)
