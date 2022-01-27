@@ -7,16 +7,7 @@ import copy
 from . import import_results, Result
 import numpy as np
 import pandas as pd
-
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=[ "#330000", "#B2FF66", "#FF99FF",
-    "#A0A0A0", "#FF007F","#003333", "#B2FF66", "#000033", "#330033", "#000000", "#663300", "#336600", "#006633",
-    "#003366", "#330066", "#660033", "#990000", "#999900", "#009900", "#009999",
-    "#000099", "#990099", "#404040", "#CC6600", "#66CC00", "#00CC66", "#0066CC",
-    "#6600CC", "#606060", "#FF8000", "#80FF00", "#00FF80", "#0080FF", "#7F00FF",
-    "#FF007F", "#FF3333", "#FFFF33", "#33FF33", "#33FFFF", "#3333FF", "#FF33FF",
-     "#FFB266", "#B2FF66", "#66FFB2", "#66B2FF", "#B266FF", "#FF66B2",
-    "#FF9999", "#FFFF99", "#99FF99", "#99FFFF", "#9999FF",  "#E0E0E0", 
-    "#FFE5CC","#E5FFCC",  "#CCFFE5", "#CCE5FF", "#FFCCFF"]) 
+LINE_STYLES=['solid' ,'dashed', ':']
 class Plotter:
     """
     Class responsible for draw and save results plots 
@@ -105,7 +96,9 @@ class Plotter:
         plt.ylabel("Wynik")
         plt.title(title)
         plt.legend()
-        plt.show()
+        plt.ylim([0., .7])
+
+        # plt.show()
         fig.savefig(save_path, dpi=fig.dpi)
         plt.close()
 
@@ -114,13 +107,19 @@ class Plotter:
         df = pd.read_csv(path,header=None,skiprows=[0])
         headers = [(x//7, (x%7)-3)  for x in range(int(df.shape[1])) ]
         # df.columns = headers
+
         fig = plt.figure()
-        plt.plot(df, label=headers)
+
+        for i in range(len(df.iloc[0])):
+            if i%7==0:
+                plt.gca().set_prop_cycle(None)
+            plt.plot(df[i], label=headers[i],linestyle=LINE_STYLES[i//7])
+            
         plt.title('Dystrubucja zadań')
         plt.xlabel('Numer egzaminu')
         plt.ylabel('Ile razy zadanie zostało wybrane')
-        plt.legend()
-        plt.show()
+        plt.legend(loc='upper left')
+        # plt.show()
         fig.savefig(path.replace('.csv',''), dpi=fig.dpi)
         plt.close()
 
@@ -288,11 +287,12 @@ class Plotter:
         df = pd.read_csv(path,header=None,skiprows=[0])
 
         fig = plt.figure()
+        plt.ylim([0.8, 2.5])
         plt.plot(np.mean(df,axis=1),label='Średnia zmiana')
         plt.title('Progres studentów')
         plt.xlabel('Numer egzaminu')
         plt.ylabel('Zmiana poziomu')
-        plt.legend()
-        plt.show()
+        plt.legend(loc='upper left')
+        # plt.show()
         fig.savefig(path.replace('.csv',''), dpi=fig.dpi)
         plt.close()  
