@@ -1,16 +1,29 @@
 from itertools import product
 from random import random
 
+from argparse import ArgumentParser
+from typing import Iterator, Tuple
+
+from torch import Tensor
+
+import gym
+import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
-
-import numpy as np
+from pl_bolts.models.rl import AdvantageActorCritic
+from pytorch_lightning import Trainer, seed_everything, LightningModule
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
 from scipy.special import expit
 
 
 class SimpleRashStudent:
-
-    def __init__(self, proficiency: np.array, desireToLearn: float = 1, baseChangeParam: float = 0.1) -> None:
+    def __init__(
+        self,
+        proficiency: np.array,
+        desireToLearn: float = 1,
+        baseChangeParam: float = 0.1,
+    ) -> None:
         """
         :param proficiency: The list of skills proficiency in range [-3,3].
         :param desireToLearn: The likelihood to do task [0,1]
@@ -20,7 +33,9 @@ class SimpleRashStudent:
         self._proficiency = proficiency
         self._desireToLearn = desireToLearn
 
-    def solve_task(self, task_difficulty: int, skill_id: int, should_learn: bool) -> bool:
+    def solve_task(
+        self, task_difficulty: int, skill_id: int, should_learn: bool
+    ) -> bool:
         """
         Function responsible for solve task which triggers update proficiency
         Used formula for probability of correct answer p_corr=1/{1+e^[-(proficiency-difficulty)]}
@@ -69,6 +84,7 @@ class SchoolEnv(Env):
     - at n-th step exam is performed, so 2 tasks for each skill (of difficulty equal to 2) is given to student, reward
     at this moment is sum of solved tasks (without -1 points for not solved tasks)
     """
+
     POSSIBLE_TASK_DIFFICULTIES = [-3, -2, -1, 0, 1, 2, 3]
 
     def __init__(self, skills_quantity: int, time_to_exam: int):
@@ -84,7 +100,9 @@ class SchoolEnv(Env):
         self.number_of_tasks = skills_quantity * self.number_of_difficulties
         self.action_space = Discrete(n=self.number_of_tasks)
 
-        self.observation_space = Box(low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int)
+        self.observation_space = Box(
+            low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int
+        )
 
     def step(self, action: int):
         """
@@ -102,7 +120,8 @@ class SchoolEnv(Env):
 
         Returns:
             observation np.array: vector of shape [1, 2*number of tasks] which is constructed as follows:
-                [number_of_correctly_solved_first_task, number_of_incorrectly_solved_first_task, number_of_correctly_solved_second_task .. ]
+                [number_of_correctly_solved_first_task, number_of_incorrectly_solved_first_task,
+                number_of_correctly_solved_second_task .. ]
                 so value under the index 37 refers to number of not solved task number 18 because:
                 37 // 2 = 18
                 and 37 % 2 = 1 or 37 - (18 * 2) = 1
@@ -125,12 +144,12 @@ class SchoolEnv(Env):
             skill_id, difficulty_id = self.extract_skill_difficulty_from_action(action)
             difficulty = self.POSSIBLE_TASK_DIFFICULTIES[difficulty_id]
             is_task_solved = self.student.solve_task(
-                task_difficulty=difficulty,
-                skill_id=skill_id,
-                should_learn=True
+                task_difficulty=difficulty, skill_id=skill_id, should_learn=True
             )
-            reward = 1 if is_task_solved else -1
-            task_in_state_id = self.get_task_position_in_state(difficulty_id=difficulty_id, skill_id=skill_id, solved=is_task_solved)
+            # reward = 1 if is_task_solved else -1
+            task_in_state_id = self.get_task_position_in_state(
+                difficulty_id=difficulty_id, skill_id=skill_id, solved=is_task_solved
+            )
             self.state[task_in_state_id] += 1
 
         else:
@@ -138,11 +157,13 @@ class SchoolEnv(Env):
                 is_task_solved = self.student.solve_task(
                     task_difficulty=self.POSSIBLE_TASK_DIFFICULTIES[6],
                     skill_id=skill_id,
-                    should_learn=False
+                    should_learn=False,
                 )
                 if is_task_solved:
                     reward += 1
-                    task_in_state_id = self.get_task_position_in_state(difficulty_id=6, skill_id=skill_id, solved=is_task_solved)
+                    task_in_state_id = self.get_task_position_in_state(
+                        difficulty_id=6, skill_id=skill_id, solved=is_task_solved
+                    )
                     self.state[task_in_state_id] += 1
 
             done = True
@@ -150,10 +171,14 @@ class SchoolEnv(Env):
 
         return self.state, reward, done, info
 
-    def get_task_position_in_state(self, difficulty_id: int, skill_id: int, solved: bool):
-        return 2 * (skill_id * self.number_of_tasks + difficulty_id) + int(not solved)
+    def get_task_position_in_state(
+        self, difficulty_id: int, skill_id: int, solved: bool
+    ) -> int:
+        return 2 * (skill_id * self.number_of_difficulties + difficulty_id) + int(
+            not solved
+        )
 
-    def extract_skill_difficulty_from_action(self, action_id: int):
+    def extract_skill_difficulty_from_action(self, action_id: int) -> Tuple[int, int]:
         """
         Takes as an input action_id (task_id) and returns skill_id and difficulty_id from that
         """
@@ -161,19 +186,36 @@ class SchoolEnv(Env):
         difficulty_id = action_id - skill_id * self.number_of_difficulties
         return skill_id, difficulty_id
 
-    def reset(self):
-        student_proficiency = np.clip(np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1)
+    def reset(self) -> np.array:
+        student_proficiency = np.clip(
+            np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
+        )
         self.student = SimpleRashStudent(proficiency=student_proficiency)
         self.state = np.zeros(shape=(2 * self.number_of_tasks))
         self.iteration = 0
+        return self.state
 
 
-if __name__ == '__main__':
-    env = SchoolEnv(skills_quantity=1, time_to_exam=7)
-    env.reset()
-    for i in range(20):
-        actions = env.action_space
-        state, reward, done, info = env.step(actions.sample())
-        print(state, reward, done, info)
-        if done:
-            env.reset()
+if __name__ == "__main__":
+    gym.envs.register(
+        id="schoolenv-v0",
+        entry_point="school_environment:SchoolEnv",
+        kwargs={"skills_quantity": 2, "time_to_exam": 20},
+    )
+
+    parser = ArgumentParser(add_help=False)
+    parser = Trainer.add_argparse_args(parser)
+    parser = AdvantageActorCritic.add_model_specific_args(parser)
+    args = parser.parse_args()
+
+    model = AdvantageActorCritic(**args.__dict__)
+    checkpoint_callback = ModelCheckpoint(
+        save_top_k=1, monitor="avg_reward", mode="max", verbose=True
+    )
+
+    seed_everything(123)
+    wandb_logger = WandbLogger(project="schooling-rl", name="2 skill 20 tasks to exam")
+    trainer = Trainer.from_argparse_args(
+        args, deterministic=True, callbacks=checkpoint_callback, logger=wandb_logger
+    )
+    trainer.fit(model)
