@@ -1,17 +1,14 @@
+from argparse import ArgumentParser
 from itertools import product
 from random import random
-
-from argparse import ArgumentParser
-from typing import Iterator, Tuple
-
-from torch import Tensor
+from typing import Tuple
 
 import gym
 import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
 from pl_bolts.models.rl import AdvantageActorCritic
-from pytorch_lightning import Trainer, seed_everything, LightningModule
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from scipy.special import expit
@@ -75,14 +72,9 @@ class SchoolEnv(Env):
     to number of possible fails (so simply the time of learning before the exam).
 
     Reward is calculated as follows:
-    -1: for each failed task by student
-    0: when student is procrastinating
-    1: for each solved task by student
-
-    The number of task done in one step:
-    - during first n-1 steps student (our environment) has time to learn,
+    - 0 during first n-1 steps, student (our environment) has time to learn,
     - at n-th step exam is performed, so 2 tasks for each skill (of difficulty equal to 2) is given to student, reward
-    at this moment is sum of solved tasks (without -1 points for not solved tasks)
+    at this moment is sum of solved tasks
     """
 
     POSSIBLE_TASK_DIFFICULTIES = [-3, -2, -1, 0, 1, 2, 3]
@@ -141,12 +133,13 @@ class SchoolEnv(Env):
         is_learning_action = self.iteration // self.time_to_exam == 0
 
         if is_learning_action and self.student.want_work():
-            skill_id, difficulty_id = self.extract_skill_difficulty_from_action(action)
+            skill_id, difficulty_id = self.extract_skill_and_difficulty_from_action(
+                action
+            )
             difficulty = self.POSSIBLE_TASK_DIFFICULTIES[difficulty_id]
             is_task_solved = self.student.solve_task(
                 task_difficulty=difficulty, skill_id=skill_id, should_learn=True
             )
-            # reward = 1 if is_task_solved else -1
             task_in_state_id = self.get_task_position_in_state(
                 difficulty_id=difficulty_id, skill_id=skill_id, solved=is_task_solved
             )
@@ -178,7 +171,9 @@ class SchoolEnv(Env):
             not solved
         )
 
-    def extract_skill_difficulty_from_action(self, action_id: int) -> Tuple[int, int]:
+    def extract_skill_and_difficulty_from_action(
+        self, action_id: int
+    ) -> Tuple[int, int]:
         """
         Takes as an input action_id (task_id) and returns skill_id and difficulty_id from that
         """
