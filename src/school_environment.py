@@ -109,8 +109,8 @@ class SchoolEnv(Env):
 
         Returns:
             observation np.array: vector of shape [1, 2*number of tasks] which is constructed as follows:
-                [number_of_not-solved_first_task, number_of_not_solved_second_task, ... ,
-                number_of, correctly_solved_first_task ... ]
+                [number_of_not_solved_first_task, number_of_not_solved_second_task, ... ,
+                number_of_solved_first_task , numbrer of_solved_second_task, ... ]
             reward (float) : reward obtained in this iteration
             done (bool): whether the episode has ended
             info (dict): after epoch with exam specific information about score:
@@ -141,8 +141,8 @@ class SchoolEnv(Env):
                     skill_id=skill_id,
                     should_learn=False,
                 )
-                task_id = self.combine_skill_and_difficulty_to_action(difficulty_id=6, skill_id=skill_id)
-                self.state[int(is_task_solved), task_id] += 1
+                action = self.combine_skill_and_difficulty_to_action(difficulty_id=6, skill_id=skill_id)
+                self.state[int(is_task_solved), action] += 1
 
                 if is_task_solved:
                     reward += 1
