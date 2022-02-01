@@ -24,7 +24,7 @@ class SimpleRashStudent:
         """
         :param proficiency: The list of skills proficiency in range [-3,3].
         :param desireToLearn: The likelihood to do task [0,1]
-        :param baseChangeParam: TODO
+        :param baseChangeParam: How quicly student can learn
         """
         self._baseChangeParam = baseChangeParam
         self._proficiency = proficiency
@@ -37,9 +37,6 @@ class SimpleRashStudent:
         Function responsible for solve task which triggers update proficiency
         Used formula for probability of correct answer p_corr=1/{1+e^[-(proficiency-difficulty)]}
         Final mark is mean of all probabilities for particular skills
-        :param task_difficulty: TODO
-        :param skill_id: TODO
-        :param should_learn:
         """
         probability_to_solve_task = expit(self._proficiency[skill_id] - task_difficulty)
         is_solved = random() < probability_to_solve_task
