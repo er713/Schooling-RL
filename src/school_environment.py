@@ -83,7 +83,7 @@ class SchoolEnv(Env):
         """
         self.skills_quantity = skills_quantity
         self.time_to_exam = time_to_exam
-        self.reward_range = (-1, 2 * self.skills_quantity)
+        self.reward_range = (0, 2 * self.skills_quantity)
 
         self.number_of_difficulties = len(self.POSSIBLE_TASK_DIFFICULTIES)
         self.number_of_tasks = skills_quantity * self.number_of_difficulties
@@ -109,13 +109,8 @@ class SchoolEnv(Env):
 
         Returns:
             observation np.array: vector of shape [1, 2*number of tasks] which is constructed as follows:
-                [number_of_correctly_solved_first_task, number_of_incorrectly_solved_first_task,
-                number_of_correctly_solved_second_task .. ]
-                so value under the index 37 refers to number of not solved task number 18 because:
-                37 // 2 = 18
-                and 37 % 2 = 1 or 37 - (18 * 2) = 1
-                Task number 18 refers to skill[2] and difficulty[5] as in action
-
+                [number_of_not-solved_first_task, number_of_not_solved_second_task, ... ,
+                number_of, correctly_solved_first_task ... ]
             reward (float) : reward obtained in this iteration
             done (bool): whether the episode has ended
             info (dict): after epoch with exam specific information about score:
@@ -137,10 +132,7 @@ class SchoolEnv(Env):
             is_task_solved = self.student.solve_task(
                 task_difficulty=difficulty, skill_id=skill_id, should_learn=True
             )
-            task_in_state_id = self.get_task_position_in_state(
-                difficulty_id=difficulty_id, skill_id=skill_id, solved=is_task_solved
-            )
-            self.state[task_in_state_id] += 1
+            self.state[int(is_task_solved), action] += 1
 
         else:
             for skill_id, _ in product(range(self.skills_quantity), range(2)):
@@ -149,24 +141,21 @@ class SchoolEnv(Env):
                     skill_id=skill_id,
                     should_learn=False,
                 )
+                task_id = self.combine_skill_and_difficulty_to_action(difficulty_id=6, skill_id=skill_id)
+                self.state[int(is_task_solved), task_id] += 1
+
                 if is_task_solved:
                     reward += 1
-                    task_in_state_id = self.get_task_position_in_state(
-                        difficulty_id=6, skill_id=skill_id, solved=is_task_solved
-                    )
-                    self.state[task_in_state_id] += 1
 
             done = True
             info["exam_score"] = reward
 
-        return self.state, reward, done, info
+        return self.state.flatten(), reward, done, info
 
-    def get_task_position_in_state(
-        self, difficulty_id: int, skill_id: int, solved: bool
+    def combine_skill_and_difficulty_to_action(
+        self, difficulty_id: int, skill_id: int
     ) -> int:
-        return 2 * (skill_id * self.number_of_difficulties + difficulty_id) + int(
-            not solved
-        )
+        return skill_id * self.number_of_difficulties + difficulty_id
 
     def extract_skill_and_difficulty_from_action(
         self, action_id: int
@@ -183,16 +172,16 @@ class SchoolEnv(Env):
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
         self.student = SimpleRashStudent(proficiency=student_proficiency)
-        self.state = np.zeros(shape=(2 * self.number_of_tasks))
+        self.state = np.zeros(shape=(2, self.number_of_tasks))
         self.iteration = 0
-        return self.state
+        return self.state.flatten()
 
 
 if __name__ == "__main__":
     gym.envs.register(
         id="schoolenv-v0",
         entry_point="school_environment:SchoolEnv",
-        kwargs={"skills_quantity": 2, "time_to_exam": 20},
+        kwargs={"skills_quantity": 5, "time_to_exam": 55},
     )
 
     parser = ArgumentParser(add_help=False)
@@ -206,7 +195,7 @@ if __name__ == "__main__":
     )
 
     seed_everything(123)
-    wandb_logger = WandbLogger(project="schooling-rl", name="2 skill 20 tasks to exam")
+    wandb_logger = WandbLogger(project="schooling-rl", name="5 skill 55 tasks to exam")
     trainer = Trainer.from_argparse_args(
         args, deterministic=True, callbacks=checkpoint_callback, logger=wandb_logger
     )
