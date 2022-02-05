@@ -1,7 +1,5 @@
 from argparse import ArgumentParser
 from itertools import product
-from random import random
-from typing import Tuple
 
 import gym
 import numpy as np
@@ -11,50 +9,9 @@ from pl_bolts.models.rl import AdvantageActorCritic
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
-from scipy.special import expit
 
-
-class SimpleRashStudent:
-    def __init__(
-        self,
-        proficiency: np.array,
-        desireToLearn: float = 1,
-        baseChangeParam: float = 0.1,
-    ) -> None:
-        """
-        :param proficiency: The list of skills proficiency in range [-3,3].
-        :param desireToLearn: The likelihood to do task [0,1]
-        :param baseChangeParam: How quicly student can learn
-        """
-        self._baseChangeParam = baseChangeParam
-        self._proficiency = proficiency
-        self._desireToLearn = desireToLearn
-
-    def solve_task(
-        self, task_difficulty: int, skill_id: int, should_learn: bool
-    ) -> bool:
-        """
-        Function responsible for solve task which triggers update proficiency
-        Used formula for probability of correct answer p_corr=1/{1+e^[-(proficiency-difficulty)]}
-        Final mark is mean of all probabilities for particular skills
-        """
-        probability_to_solve_task = expit(self._proficiency[skill_id] - task_difficulty)
-        is_solved = random() < probability_to_solve_task
-
-        if should_learn:
-            diff = task_difficulty - self._proficiency[skill_id]
-            base_change = max(diff, self._baseChangeParam)
-
-            correctness_mod = 3 / 2 if is_solved else 2 / 3
-            change_strength = probability_to_solve_task ** correctness_mod
-
-            self._proficiency[skill_id] += base_change * change_strength
-            self._proficiency[skill_id] = np.clip(self._proficiency[skill_id], -3, 3)
-
-        return is_solved
-
-    def want_work(self) -> bool:
-        return random() < self._desireToLearn
+from school import Task
+from school.students import RashStudent
 
 
 class SchoolEnv(Env):
@@ -85,10 +42,20 @@ class SchoolEnv(Env):
         self.time_to_exam = time_to_exam
         self.reward_range = (0, 2 * self.skills_quantity)
 
-        self.number_of_difficulties = len(self.POSSIBLE_TASK_DIFFICULTIES)
-        self.number_of_tasks = skills_quantity * self.number_of_difficulties
-        self.action_space = Discrete(n=self.number_of_tasks)
+        self.tasks = []
+        self.test_task_ids = []
+        for task_id, (difficulty, skill_id) in enumerate(
+            product(self.POSSIBLE_TASK_DIFFICULTIES, range(skills_quantity))
+        ):
+            self.tasks.append(Task({skill_id: difficulty}))
+            if difficulty == 2:
+                self.test_task_ids.append(task_id)
+                self.test_task_ids.append(task_id)
 
+        self.number_of_difficulties = len(self.POSSIBLE_TASK_DIFFICULTIES)
+        self.number_of_tasks = len(self.tasks)
+
+        self.action_space = Discrete(n=self.number_of_tasks)
         self.observation_space = Box(
             low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int
         )
@@ -110,7 +77,7 @@ class SchoolEnv(Env):
         Returns:
             observation np.array: vector of shape [1, 2*number of tasks] which is constructed as follows:
                 [number_of_not_solved_first_task, number_of_not_solved_second_task, ... ,
-                number_of_solved_first_task , numbrer of_solved_second_task, ... ]
+                number_of_solved_first_task , number of_solved_second_task, ... ]
             reward (float) : reward obtained in this iteration
             done (bool): whether the episode has ended
             info (dict): after epoch with exam specific information about score:
@@ -118,37 +85,20 @@ class SchoolEnv(Env):
         """
         self.iteration += 1
 
-        reward = 0
-        info = {}
-        done = False
-
         is_learning_action = self.iteration // self.time_to_exam == 0
+        done = not is_learning_action
 
-        if is_learning_action and self.student.want_work():
-            skill_id, difficulty_id = self.extract_skill_and_difficulty_from_action(
-                action
-            )
-            difficulty = self.POSSIBLE_TASK_DIFFICULTIES[difficulty_id]
-            is_task_solved = self.student.solve_task(
-                task_difficulty=difficulty, skill_id=skill_id, should_learn=True
-            )
+        reward = 0
+        tasks_todo = [action] if is_learning_action else self.test_task_ids
+        for action in tasks_todo:
+            result = self.student.solve_task(self.tasks[action], isExam=True)
+            is_task_solved = result.mark
             self.state[int(is_task_solved), action] += 1
 
-        else:
-            for skill_id, _ in product(range(self.skills_quantity), range(2)):
-                is_task_solved = self.student.solve_task(
-                    task_difficulty=self.POSSIBLE_TASK_DIFFICULTIES[6],
-                    skill_id=skill_id,
-                    should_learn=False,
-                )
-                action = self.combine_skill_and_difficulty_to_action(difficulty_id=6, skill_id=skill_id)
-                self.state[int(is_task_solved), action] += 1
+            if is_task_solved:
+                reward += 1
 
-                if is_task_solved:
-                    reward += 1
-
-            done = True
-            info["exam_score"] = reward
+        info = {} if is_learning_action else {"exam_score": reward}
 
         return self.state.flatten(), reward, done, info
 
@@ -157,21 +107,11 @@ class SchoolEnv(Env):
     ) -> int:
         return skill_id * self.number_of_difficulties + difficulty_id
 
-    def extract_skill_and_difficulty_from_action(
-        self, action_id: int
-    ) -> Tuple[int, int]:
-        """
-        Takes as an input action_id (task_id) and returns skill_id and difficulty_id from that
-        """
-        skill_id = action_id // self.number_of_difficulties
-        difficulty_id = action_id - skill_id * self.number_of_difficulties
-        return skill_id, difficulty_id
-
     def reset(self) -> np.array:
         student_proficiency = np.clip(
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
-        self.student = SimpleRashStudent(proficiency=student_proficiency)
+        self.student = RashStudent(id=-1, proficiency=list(student_proficiency))
         self.state = np.zeros(shape=(2, self.number_of_tasks))
         self.iteration = 0
         return self.state.flatten()
