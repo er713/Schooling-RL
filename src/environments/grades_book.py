@@ -14,15 +14,15 @@ from school import Task
 from school.students import RashStudent
 
 
-class SchoolEnv(Env):
+class GradesBookEnvironment(Env):
     """
     As an action agent (teacher) can give a student one task. The task is related to some skill (ability to learn)
     and also difficulty. In the result number of possible action (tasks) is equal to quantity of possible
     difficulties multiplied by number of different skills (abilities).
 
     As an observation returned by the environment is something that can be interpreted as grade book.
-    For each task (so the difficulty and skills as well) is returned number of successes and number of fails
-    done by student. So the vector is two times longer than vector of possible actions. The range of values if from 0
+    For each task given by teacher, the number of successes and number of fails is returned .
+    So the resulting vector is two times longer than vector of possible actions. The range of values is from 0
     to number of possible fails (so simply the time of learning before the exam).
 
     Reward is calculated as follows:
@@ -72,9 +72,8 @@ class SchoolEnv(Env):
             info (dict): after epoch with exam specific information about score:
                 'exam_score': int
         """
-        self.iteration += 1
 
-        is_learning_action = self.iteration // self.time_to_exam == 0
+        is_learning_action = (self.iteration + 1) // self.time_to_exam == 0
         done = not is_learning_action
 
         reward = 0
@@ -84,10 +83,11 @@ class SchoolEnv(Env):
             is_task_solved = result.mark
             self.state[int(is_task_solved), action] += 1
 
-            if is_task_solved:
+            if is_task_solved and not is_learning_action:
                 reward += 1
 
         info = {} if is_learning_action else {"exam_score": reward}
+        self.iteration += 1
 
         return self.state.flatten(), reward, done, info
 
@@ -103,9 +103,9 @@ class SchoolEnv(Env):
 
 if __name__ == "__main__":
     gym.envs.register(
-        id="schoolenv-v0",
-        entry_point="school_environment:SchoolEnv",
-        kwargs={"skills_quantity": 5, "time_to_exam": 55},
+        id="gradesbook-v0",
+        entry_point="environments.grades_book:GradesBookEnvironment",
+        kwargs={"skills_quantity": 1, "time_to_exam": 10},
     )
 
     parser = ArgumentParser(add_help=False)
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
     seed_everything(123)
     model = AdvantageActorCritic(**args.__dict__)
-    wandb_logger = WandbLogger(project="schooling-rl", name="5 skill 55 tasks to exam")
+    # wandb_logger = WandbLogger(project="schooling-rl", name="1 skill 10 tasks to exam")
+    wandb_logger = None
     trainer = Trainer.from_argparse_args(args, deterministic=True, logger=wandb_logger)
     trainer.fit(model)
