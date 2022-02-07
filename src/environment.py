@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from itertools import product
+from typing import Tuple, Dict
 
 import gym
 import numpy as np
@@ -59,22 +60,11 @@ class SchoolEnv(Env):
             low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int
         )
 
-    def step(self, action: int):
+    def step(self, action: int) -> Tuple[np.array, float, bool, Dict]:
         """
-        Args:
-            action (object): Task given to student, action space is constructed as follows:
-            [first_skill_tasks, second_skill_tasks, ..., etc.] so for 3 skills and 7 difficulties we have 21 actions.
-            action simply refers to trying to solve task of id 18 which means:
-                skill of id 2 because 18 // 7 = 2 (action id divided by number of difficulties)
-                difficulty of id 5 because 18 - (7 * 2) = 4
-
-                Sanity check: last action of id 20 refers to difficulty of id 6 (so the last one when the number of
-                skills is 7) as 20 - (2*7) = 6
-
-                During epoch with exam epoch action is ignored
-
-        Returns:
-            observation np.array: vector of shape [1, 2*number of tasks] which is constructed as follows:
+        :param action: Task given to student. During epoch with exam epoch action is ignored
+        :return:
+            observation (np.array): vector of shape [1, 2*number of tasks] which is constructed as follows:
                 [number_of_not_solved_first_task, number_of_not_solved_second_task, ... ,
                 number_of_solved_first_task , number of_solved_second_task, ... ]
             reward (float) : reward obtained in this iteration
@@ -101,11 +91,6 @@ class SchoolEnv(Env):
 
         return self.state.flatten(), reward, done, info
 
-    def combine_skill_and_difficulty_to_action(
-        self, difficulty_id: int, skill_id: int
-    ) -> int:
-        return skill_id * self.number_of_difficulties + difficulty_id
-
     def reset(self) -> np.array:
         student_proficiency = np.clip(
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
@@ -131,7 +116,5 @@ if __name__ == "__main__":
     seed_everything(123)
     model = AdvantageActorCritic(**args.__dict__)
     wandb_logger = WandbLogger(project="schooling-rl", name="5 skill 55 tasks to exam")
-    trainer = Trainer.from_argparse_args(
-        args, deterministic=True, logger=wandb_logger
-    )
+    trainer = Trainer.from_argparse_args(args, deterministic=True, logger=wandb_logger)
     trainer.fit(model)
