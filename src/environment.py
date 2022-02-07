@@ -1,29 +1,22 @@
-from argparse import ArgumentParser
+from abc import ABC
 from itertools import product
 from typing import Tuple, Dict
 
-import gym
 import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
-from pl_bolts.models.rl import AdvantageActorCritic
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.loggers import WandbLogger
 
 from school import Task
 from school.students import RashStudent
 
 
-class GradesBookEnvironment(Env):
+class BaseSchoolEnvironment(Env, ABC):
     """
     As an action agent (teacher) can give a student one task. The task is related to some skill (ability to learn)
     and also difficulty. In the result number of possible action (tasks) is equal to quantity of possible
     difficulties multiplied by number of different skills (abilities).
 
-    As an observation returned by the environment is something that can be interpreted as grade book.
-    For each task given by teacher, the number of successes and number of fails is returned .
-    So the resulting vector is two times longer than vector of possible actions. The range of values is from 0
-    to number of possible fails (so simply the time of learning before the exam).
+    As an observation depends on used grades evidence model.
 
     Reward is calculated as follows:
     - 0 during first n-1 steps, student (our environment) has time to learn,
@@ -32,6 +25,7 @@ class GradesBookEnvironment(Env):
     """
 
     POSSIBLE_TASK_DIFFICULTIES = [-3, -2, -1, 0, 1, 2, 3]
+    state: np.array
 
     def __init__(self, skills_quantity: int, time_to_exam: int):
         """
@@ -56,9 +50,6 @@ class GradesBookEnvironment(Env):
         self.number_of_tasks = len(self.tasks)
 
         self.action_space = Discrete(n=self.number_of_tasks)
-        self.observation_space = Box(
-            low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int
-        )
 
     def step(self, action: int) -> Tuple[np.array, float, bool, Dict]:
         """
@@ -78,12 +69,14 @@ class GradesBookEnvironment(Env):
 
         reward = 0
         tasks_todo = [action] if is_learning_action else self.test_task_ids
-        for action in tasks_todo:
+        for i, action in enumerate(tasks_todo):
             result = self.student.solve_task(
                 self.tasks[action], isExam=not is_learning_action
             )
             is_task_solved = result.mark
-            self.state[int(is_task_solved), action] += 1
+            self.update_state(
+                is_task_solved=bool(is_task_solved), task_id=action, task_in_epoch_id=i
+            )
 
             if is_task_solved and not is_learning_action:
                 reward += 1
@@ -104,26 +97,80 @@ class GradesBookEnvironment(Env):
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
         self.student = RashStudent(id=-1, proficiency=list(student_proficiency))
-        self.state = np.zeros(shape=(2, self.number_of_tasks))
         self.iteration = 0
+        self.reset_state()
         return self.state.flatten()
 
+    def update_state(
+        self, is_task_solved: bool, task_id: int, task_in_epoch_id: int
+    ) -> None:
+        raise NotImplementedError
 
-if __name__ == "__main__":
-    gym.envs.register(
-        id="gradesbook-v0",
-        entry_point="environments.grades_book:GradesBookEnvironment",
-        kwargs={"skills_quantity": 1, "time_to_exam": 10},
-    )
+    def reset_state(self) -> None:
+        raise NotImplementedError
 
-    parser = ArgumentParser(add_help=False)
-    parser = Trainer.add_argparse_args(parser)
-    parser = AdvantageActorCritic.add_model_specific_args(parser)
-    args = parser.parse_args()
 
-    seed_everything(123)
-    model = AdvantageActorCritic(**args.__dict__)
-    # wandb_logger = WandbLogger(project="schooling-rl", name="1 skill 10 tasks to exam")
-    wandb_logger = None
-    trainer = Trainer.from_argparse_args(args, deterministic=True, logger=wandb_logger)
-    trainer.fit(model)
+class GradesBookEnvironment(BaseSchoolEnvironment):
+    """
+    As an observation returned by the environment is something that can be interpreted as grade book.
+    For each task given by teacher, the number of successes and number of fails is returned .
+    So the resulting vector is two times longer than vector of possible actions. The range of values is from 0
+    to number of possible fails (so simply the time of learning before the exam).
+    """
+
+    def __init__(self, skills_quantity: int, time_to_exam: int):
+        """
+        :param skills_quantity: number of skills that can be learned
+        :param time_to_exam: number of iterations before exam
+        """
+
+        super().__init__(skills_quantity, time_to_exam)
+        self.observation_space = Box(
+            low=0, high=time_to_exam, shape=(2 * self.number_of_tasks,), dtype=np.int
+        )
+
+    def update_state(
+        self, is_task_solved: bool, task_id: int, task_in_epoch_id: int
+    ) -> None:
+        self.state[int(is_task_solved), task_id] += 1
+
+    def reset_state(self) -> None:
+        self.state = np.zeros(shape=(2, self.number_of_tasks))
+
+
+class GradesListEnvironment(BaseSchoolEnvironment):
+    """
+    As an observation returned by the environment is something that can be interpreted as grades list.
+    For each task given by teacher, the student's result is returned together with one-hot-encoded.
+    [task_1 solved or not, one hot task_1 id, # timestep at t = 0
+    [task_2 solved or not, one hot task_2 id, # timestep at t = 1
+    ... etc]
+
+    So the resulting vector is has length:
+    (learning time + number of exam tasks) * (1 + number of tasks) i.e
+    (n - 1 + number_of_skills * 2 ) * ( 1 + number_of_skills * number_of_difficulties)
+    """
+
+    def __init__(self, skills_quantity: int, time_to_exam: int):
+        """
+        :param skills_quantity: number of skills that can be learned
+        :param time_to_exam: number of iterations before exam
+        """
+        super().__init__(skills_quantity, time_to_exam)
+        self.tasks_todo_in_epoch = self.time_to_exam - 1 + self.skills_quantity * 2
+        self.one_task_encoding = 1 + self.number_of_tasks
+        self.observation_space = Box(
+            low=0,
+            high=1,
+            shape=(self.tasks_todo_in_epoch * self.one_task_encoding,),
+            dtype=np.int,
+        )
+
+    def update_state(
+        self, is_task_solved: bool, task_id: int, task_in_epoch_id: int
+    ) -> None:
+        self.state[self.iteration + task_in_epoch_id, 0] = int(is_task_solved)
+        self.state[self.iteration + task_in_epoch_id, task_id + 1] = 1
+
+    def reset_state(self) -> None:
+        self.state = np.zeros(shape=(self.tasks_todo_in_epoch, self.one_task_encoding))
