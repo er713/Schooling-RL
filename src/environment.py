@@ -7,7 +7,6 @@ from gym import Env
 from gym.spaces import Discrete, Box
 from pl_bolts.models.rl import AdvantageActorCritic
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from school import Task
@@ -129,14 +128,10 @@ if __name__ == "__main__":
     parser = AdvantageActorCritic.add_model_specific_args(parser)
     args = parser.parse_args()
 
-    model = AdvantageActorCritic(**args.__dict__)
-    checkpoint_callback = ModelCheckpoint(
-        save_top_k=1, monitor="avg_reward", mode="max", verbose=True
-    )
-
     seed_everything(123)
+    model = AdvantageActorCritic(**args.__dict__)
     wandb_logger = WandbLogger(project="schooling-rl", name="5 skill 55 tasks to exam")
     trainer = Trainer.from_argparse_args(
-        args, deterministic=True, callbacks=checkpoint_callback, logger=wandb_logger
+        args, deterministic=True, logger=wandb_logger
     )
     trainer.fit(model)
