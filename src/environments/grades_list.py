@@ -87,16 +87,22 @@ class GradesListEnvironment(Env):
         reward = 0
         tasks_todo = [action] if is_learning_action else self.test_task_ids
         for i, action in enumerate(tasks_todo):
-            result = self.student.solve_task(self.tasks[action], isExam=True)
+            result = self.student.solve_task(self.tasks[action], isExam=not is_learning_action)
             is_task_solved = result.mark
 
             self.state[i + self.iteration, 0] = int(is_task_solved)
             self.state[i + self.iteration, action + 1] = 1
 
-            if is_task_solved:
+            if is_task_solved and not is_learning_action:
                 reward += 1
 
-        info = {} if is_learning_action else {"exam_score": reward}
+        info = {}
+        if done:
+            info = {
+                "exam_score": reward,
+                "exam_score_percentage": reward / self.number_of_tasks,
+            }
+
         self.iteration += 1
 
         return self.state.flatten(), reward, done, info
