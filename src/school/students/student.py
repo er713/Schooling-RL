@@ -15,7 +15,7 @@ class Student:
     @abstractmethod
     def solve_task(self, task: object) -> None:
         """
-        Function resposible for solve task which triggers update proficiency
+        Function responsible for solve task which triggers update proficiency
         :param task: The Task object
         """
         raise NotImplementedError('solv_task was not implemented')

@@ -1,13 +1,14 @@
-from .student import Student
-from ..result import Result
-from ..task import Task
 from scipy.special import expit
 from typing import List
 import numpy as np
 import random
 
+from school.students.student import Student
+from school.task import Task
+from school.teachers.result import Result
 
-class RashStudent(Student):
+
+class RaschStudent(Student):
 
     def __init__(self, id: int, proficiency: List[float], desireToLearn: float = 1,
                  baseChangeParam: float = 0.1) -> None:
@@ -36,7 +37,7 @@ class RashStudent(Student):
             probasToSolve[skill] = expit(logit_p)
         probaToSolve = np.mean(probasToSolve[probasToSolve != 0])
         mark = 1 if random.random() < probaToSolve else 0
-        taskResult = Result(mark, -1, task, self.id, isExam=isExam)
+        taskResult = Result(mark, -1, task, self.id)
         if not isExam:
             self._update_proficiency(taskResult, float(probaToSolve))
         return taskResult
