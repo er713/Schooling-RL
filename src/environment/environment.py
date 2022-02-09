@@ -6,8 +6,8 @@ import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
 
-from school import Task
-from school.students import RashStudent
+from environment.task import Task
+from environment.rasch_student import RaschStudent
 
 
 class BaseSchoolEnvironment(Env, ABC):
@@ -96,7 +96,7 @@ class BaseSchoolEnvironment(Env, ABC):
         student_proficiency = np.clip(
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
-        self.student = RashStudent(id=-1, proficiency=list(student_proficiency))
+        self.student = RaschStudent(id=-1, proficiency=list(student_proficiency))
         self.iteration = 0
         self.reset_state()
         return self.state.flatten()

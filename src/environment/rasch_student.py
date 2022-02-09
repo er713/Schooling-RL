@@ -3,21 +3,23 @@ from typing import List
 import numpy as np
 import random
 
-from school.students.student import Student
-from school.task import Task
-from school.teachers.result import Result
+from environment.task import Task
+from environment.result import Result
 
 
-class RaschStudent(Student):
-
-    def __init__(self, id: int, proficiency: List[float], desireToLearn: float = 1,
-                 baseChangeParam: float = 0.1) -> None:
+class RaschStudent:
+    def __init__(
+        self,
+        id: int,
+        proficiency: List[float],
+        desireToLearn: float = 1,
+        baseChangeParam: float = 0.1,
+    ) -> None:
         """
         :param id: The id of student
         :param proficiency: The list of skills proficiency in range [-3,3].
         :param desireToLearn: The likelihood to do task [0,1]
         """
-        super().__init__(id, proficiency, desireToLearn)
         self.id = id
         self._proficiency = proficiency
         self._desireToLearn = desireToLearn
@@ -46,7 +48,7 @@ class RaschStudent(Student):
         """
         Function which return student choice to solve or not to solve a task,
         """
-        return True if random.random() < self._desireToLearn else False
+        return random.random() < self._desireToLearn
 
     def _update_proficiency(self, result: Result, probaToSolve: float = -1) -> None:
         """
@@ -62,11 +64,11 @@ class RaschStudent(Student):
         baseChange = np.zeros(len(self._proficiency))
         np.maximum(diffs, self._baseChangeParam, out=baseChange, where=taskSkillsMask)
         correctness_mod = 3 / 2 if result.mark == 1 else 2 / 3
-        changeStrength = probaToSolve ** correctness_mod
+        changeStrength = probaToSolve**correctness_mod
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength
             self._proficiency[idx] = max(min(self._proficiency[idx], 3), -3)
 
     @staticmethod
     def get_name():
-        return 'RashStudent'
+        return "RashStudent"
