@@ -13,9 +13,13 @@ class SimpleTeacher:
         self.env: Env = gym.make(env_name)
         self.env.reset()
 
+        self.skills_quantity = self.env.skills_quantity
+        self.number_of_difficulties = self.env.number_of_difficulties
         self.number_of_tasks = self.env.action_space.n
+
         self.task_successes = np.zeros(self.number_of_tasks)
         self.task_attempts = np.zeros(self.number_of_tasks) + 1
+        self.skills_training_progress = np.zeros(self.skills_quantity)
 
         update_strategies = {
             "gradesbook-v0": self._update_state_using_grades_book,
@@ -24,17 +28,26 @@ class SimpleTeacher:
         self.update_strategy = update_strategies[env_name]
 
     def step(self):
-        estimated_difficulties = self.task_successes / (
-            self.task_attempts + self.task_successes
+        least_trained_skill = np.argmin(self.skills_training_progress)
+        self.skills_training_progress[least_trained_skill] += 1
+
+        task_offset = least_trained_skill * self.number_of_difficulties
+        tasks_range = slice(task_offset, task_offset + self.number_of_difficulties)
+
+        estimated_difficulties = self.task_successes[tasks_range] / (
+            self.task_attempts[tasks_range] + self.task_successes[tasks_range]
         )
-        action = np.argmin(estimated_difficulties)
+        action = np.argmin(estimated_difficulties) + task_offset
         observation, _, done, _ = self.env.step(action)
+
         if done:
             print(self.env.env.student._proficiency)  # hacks   , TODO: wandb support
+
         self.update_strategy(observation, done)
 
         if done:
             self.env.reset()
+            self.skills_training_progress = np.zeros(self.skills_quantity)
 
     def _update_state_using_grades_book(
         self, observation: np.array, done: bool

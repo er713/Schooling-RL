@@ -21,12 +21,13 @@ def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):
 
 def train(
     env_name: str = "gradesbook-v0",
-    skills_quantity: int = 1,
-    time_to_exam: int = 10,
-    max_steps: int = 100,
+    skills_quantity: int = 3,
+    time_to_exam: int = 25,
+    max_steps: int = 2000,
 ):
     initialize_environments(skills_quantity, time_to_exam)
     actor = SimpleTeacher(env_name=env_name)
+
     for epoch in range(max_steps):
         actor.step()
 
