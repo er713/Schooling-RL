@@ -1,7 +1,10 @@
 import fire
 import gym
 
-from actors.base_teacher import SimpleTeacher
+from actors.dqn import DQNTableTeacher
+from actors.simple_teacher import SimpleTeacher
+
+actor_factory = {"simple-teacher": SimpleTeacher, "dqn": DQNTableTeacher}
 
 
 def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):
@@ -21,12 +24,19 @@ def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):
 
 def train(
     env_name: str = "gradesbook-v0",
+    actor_name: str = "simple-teacher",
     skills_quantity: int = 3,
     time_to_exam: int = 25,
     max_steps: int = 2000,
 ):
+    """
+    :param env_name: One of [gradesbook-v0, gradeslist-v0]
+    :param actor_name: One of [simple-teacher, dqn]
+    """
     initialize_environments(skills_quantity, time_to_exam)
-    actor = SimpleTeacher(env_name=env_name)
+
+    actor_class = actor_factory[actor_name]
+    actor = actor_class(env_name=env_name)
 
     for epoch in range(max_steps):
         actor.step()
