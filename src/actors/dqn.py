@@ -1,10 +1,12 @@
+from random import random, randint
+
 import gym
 import numpy as np
 import tensorflow as tf
 from gym import Env
 from tensorflow.keras.layers import Dense
 
-from utils.constants import MEM_SIZE, BATCH_SIZE, GAMMA, TARGET_ITER, LEARN
+from utils.constants import MEM_SIZE, BATCH_SIZE, GAMMA, EPSILON
 from utils.replay_buffer import ReplayBuffer
 
 
@@ -53,7 +55,7 @@ class DQN:
         mem_size=MEM_SIZE,
         batch_size=BATCH_SIZE,
         gamma=GAMMA,
-        learn_every_iters=LEARN,
+        epsilon=EPSILON,
     ):
         self.env: Env = gym.make(env_name)
         self.state = self.env.reset()
@@ -61,20 +63,25 @@ class DQN:
         self.mem_size = mem_size
         self.batch_size = batch_size
         self.gamma = gamma
+        self.epsilon = epsilon
 
         self.modelInputSize = self.env.observation_space.shape[0]
-        self.modelOutputSize = self.env.action_space.n
-        self.estimator = MLP(self.modelInputSize, self.modelOutputSize)
-        self.targetEstimator = MLP(self.modelInputSize, self.modelOutputSize)
+        self.actions_quantity = self.env.action_space.n
+
+        self.estimator = MLP(self.modelInputSize, self.actions_quantity)
+        self.targetEstimator = MLP(self.modelInputSize, self.actions_quantity)
 
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
 
-        self.learn_every_iters = learn_every_iters
         self.iteration = 0
 
     def step(self):
         self.iteration += 1
-        action = tf.argmax(self.estimator(self.state[np.newaxis, :])[0]).numpy()
+        if random() <= self.epsilon:
+            action = tf.argmax(self.estimator(self.state[np.newaxis, :])[0]).numpy()
+        else:
+            action = randint(0, self.actions_quantity - 1)
+
         observation, reward, done, info = self.env.step(action)
         self.mem.add(self.state, action, reward, observation, done)
         self.state = observation
@@ -87,7 +94,6 @@ class DQN:
             self.mem
         ) >= self.batch_size:
             self.learn()
-            self.__update_target()
 
     def learn(self):
         states, actions, rewards, next_states, dones = self.mem.sample()

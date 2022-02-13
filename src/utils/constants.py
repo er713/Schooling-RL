@@ -1,10 +1,6 @@
+GAMMA = 0.95
 EPSILON = 0.9
-DECAY_EPSILON = 0.9992
-MIN_EPS = 0.001
-GAMMA = 0.99
 LEARNING_RATE = 0.001
-MEM_SIZE = 2048
-BATCH_SIZE = 32
-TARGET_ITER = 8192
-LEARN = 32
+MEM_SIZE = 512
+BATCH_SIZE = 64
 # TODO this should be rather config file - use pydantic + yaml or smth
