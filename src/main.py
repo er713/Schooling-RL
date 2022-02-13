@@ -1,10 +1,10 @@
 import fire
 import gym
 
-from actors.dqn import DQNTableTeacher
+from actors.dqn import DQN
 from actors.simple_teacher import SimpleTeacher
 
-actor_factory = {"simple-teacher": SimpleTeacher, "dqn": DQNTableTeacher}
+actor_factory = {"simple-teacher": SimpleTeacher, "dqn": DQN}
 
 
 def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):

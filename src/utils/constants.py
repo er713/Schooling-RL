@@ -7,3 +7,4 @@ MEM_SIZE = 2048
 BATCH_SIZE = 32
 TARGET_ITER = 8192
 LEARN = 32
+# TODO this should be rather config file - use pydantic + yaml or smth
