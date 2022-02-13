@@ -1,12 +1,11 @@
-import random
 from collections import namedtuple, deque
-from random import random
+from random import sample
 from typing import *
 
 import gym
 import tensorflow as tf
 from gym import Env
-
+import numpy as np
 from actors.const import MEM_SIZE, BATCH_SIZE, TARGET_ITER, LEARN
 from actors.dqn_model import DQN
 from actors.losses import dqn_loss
@@ -63,7 +62,7 @@ class ReplayBuffer:
         self.memory.append(e)
 
     def sample(self):
-        experiences = random.sample(self.memory, k=self.batch_size)
+        experiences = sample(self.memory, k=self.batch_size)
 
         states = [e.state for e in experiences if e is not None]
         actions = [e.action for e in experiences if e is not None]
@@ -83,30 +82,46 @@ class DQNTableTeacher(TableTeacher):
     def __init__(
         self, env_name: str, mem_size=MEM_SIZE, batch_size=BATCH_SIZE, **kwargs
     ):
+        super().__init__(nSkills=-1, tasks=[])
         self.env: Env = gym.make(env_name)
-        self.env.reset()
+        self.state = self.env.reset()
 
         self.mem_size = mem_size
         self.batch_size = batch_size
         self.lossFun = dqn_loss
 
-        self.modelInputSize = self.env.action_space.n
-        self.estimator = DQN(self.modelInputSize)
-        self.targetEstimator = DQN(self.modelInputSize)
+        self.modelInputSize = self.env.observation_space.shape[0]
+        self.modelOutputSize = self.env.action_space.n
+        self.estimator = DQN(self.modelInputSize, self.modelOutputSize)
+        self.targetEstimator = DQN(self.modelInputSize, self.modelOutputSize)
 
         self.mem = ReplayBuffer(1, self.mem_size, self.batch_size)
         self.noTargetIte = TARGET_ITER
 
         self.__targetCounter = 0
         self.__learnCounter = LEARN
+        self.iteration = 0
 
-    def get_action(self, state):
-        task_id = tf.argmax(self.estimator(state)[0]).numpy()
-        for task in self.tasks:
-            if task.id == task_id:
-                return task
+    def step(self):
+        self.iteration += 1
+        action = tf.argmax(self.estimator(self.state[np.newaxis, :])[0]).numpy()
+        observation, reward, done, info = self.env.step(action)
+        self.mem.add(self.state, action, reward, observation, done)
+        self.state = observation
+
+        if done:
+            print(self.env.env.student._proficiency)  # hacks   , TODO: wandb support
+            self.state = self.env.reset()
+
+        if (self.iteration + 1) % self.batch_size == 0 and len(
+            self.mem
+        ) >= self.batch_size:
+            print("learn")
+            self.learn()
+            self.__update_target()
 
     def receive_result(self, result, last=False, reward=None) -> None:
+
         # Exam results need to be reduced in receive_exam_res
         super().receive_result(result, last, reward)
         # copy estimator weights to target estimator after noTargetIte iterations
@@ -117,27 +132,24 @@ class DQNTableTeacher(TableTeacher):
             self.learn()
 
     def learn(self):
-        if LEARN == self.__learnCounter:
-            self.__learnCounter = 0
-            states, actions, rewards, next_states, dones = self.mem.sample()
-            real_q = []
-            states_buff = []
-            actions_buff = []
+        states, actions, rewards, next_states, dones = self.mem.sample()
+        real_q = []
+        states_buff = []
+        actions_buff = []
 
-            for i, (r, d, ns, a, s) in enumerate(
-                zip(rewards, dones, next_states, actions, states)
-            ):
-                if d:
-                    real_q.append(tf.constant([r], dtype=tf.float32))
-                else:
-                    next_state = tf.expand_dims(tf.constant(ns), axis=0)
-                    real_q.append(r + self.gamma * self.__get_target_q(next_state)[0])
-                states_buff.append(s)
-                actions_buff.append((i, a))
-            self.estimator.train_step(
-                tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q)
-            )
-        self.__learnCounter += 1
+        for i, (r, d, ns, a, s) in enumerate(
+            zip(rewards, dones, next_states, actions, states)
+        ):
+            if d:
+                real_q.append(tf.constant([r], dtype=tf.float32))
+            else:
+                next_state = tf.expand_dims(tf.constant(ns), axis=0)
+                real_q.append(r + self.gamma * self.__get_target_q(next_state)[0])
+            states_buff.append(s)
+            actions_buff.append((i, a))
+        self.estimator.train_step(
+            tf.constant(states_buff), tf.constant(actions_buff), tf.stack(real_q)
+        )
 
     def update_memory(self, result: Result, last: bool):
         # last exam task

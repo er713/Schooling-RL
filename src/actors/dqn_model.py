@@ -5,17 +5,16 @@ from actors.losses import dqn_loss
 
 
 class DQN(tf.keras.Model):
-    def __init__(self, inputSize):
+    def __init__(self, inputSize, outputSize):
         super().__init__(name="dqn")
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         self.loss = dqn_loss()
 
         self.model = tf.keras.Sequential(
             [
-                Dense(4 * inputSize, activation="relu", input_shape=(inputSize,)),
-                Dense(2 * inputSize, activation="relu"),
-                Dense(inputSize, activation="relu"),
-                Dense(inputSize / 2),
+                Dense(inputSize, activation="relu", input_shape=(inputSize,)),
+                Dense(128, activation="relu"),
+                Dense(outputSize),
             ]
         )
 

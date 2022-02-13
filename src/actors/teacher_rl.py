@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from random import random, choice
 from typing import List
 
 from actors.const import EPSILON, DECAY_EPSILON, MIN_EPS, GAMMA, LEARNING_RATE
@@ -27,12 +28,12 @@ class TeacherRL(Teacher):
 
     def choose_task(self, student, is_learning: bool = True) -> Task:
         # ekspoalatacja
-        if not is_learning or random.random() > self.epsilon:
+        if not is_learning or random() > self.epsilon:
             state = self.get_state(student)
             action = self.get_action(state)
         # eksploracja
         else:
-            action = random.choice(self.tasks)
+            action = choice(self.tasks)
         return action
 
     def receive_result(self, result, reward=None, last=False) -> None:
