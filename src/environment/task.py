@@ -20,8 +20,13 @@ class Task:
         self.taskDifficulties: Dict[int, float] = taskDifficulties
 
     @classmethod
-    def generate_random_task(cls, nSkills: int, minSkill: int = 1, maxSkill: int = None,
-                             difficultiesRange: Tuple[float, float] = (-3, 3)) -> Task:
+    def generate_random_task(
+        cls,
+        nSkills: int,
+        minSkill: int = 1,
+        maxSkill: int = None,
+        difficultiesRange: Tuple[float, float] = (-3, 3),
+    ) -> Task:
         """
         Create random Task with specified parameters.
         :param nSkills: Number of skills.
@@ -33,14 +38,22 @@ class Task:
         """
         if maxSkill is None:
             maxSkill = nSkills
-        chooseNSkills = \
-            np.random.choice(np.arange(nSkills), replace=False,
-                             # number of skills in one task depends on exponential distribution
-                             # with lambda = 0.8 scaled and rounded to [minSkill, maxSkill]
-                             size=np.floor(np.random.exponential(10 / 8, 1) / 4 * (maxSkill - minSkill))[0] + minSkill)
+        chooseNSkills = np.random.choice(
+            np.arange(nSkills),
+            replace=False,
+            # number of skills in one task depends on exponential distribution
+            # with lambda = 0.8 scaled and rounded to [minSkill, maxSkill]
+            size=np.floor(np.random.exponential(10 / 8, 1) / 4 * (maxSkill - minSkill))[
+                0
+            ]
+            + minSkill,
+        )
 
-        difficulties = np.random.random(chooseNSkills.shape[0]) * (difficultiesRange[1] - difficultiesRange[0]) + \
-                       difficultiesRange[0]
+        difficulties = (
+            np.random.random(chooseNSkills.shape[0])
+            * (difficultiesRange[1] - difficultiesRange[0])
+            + difficultiesRange[0]
+        )
 
         combined = dict()
         for skill, diff in zip(chooseNSkills, difficulties):
@@ -51,7 +64,7 @@ class Task:
         return Task(taskDifficulties=self.taskDifficulties, taskId=self.id)
 
     def __str__(self):
-        return f'taskID: {str(self.id)}, difficulties : {str(list(self.taskDifficulties.items()))}'
+        return f"taskID: {str(self.id)}, difficulties : {str(list(self.taskDifficulties.items()))}"
 
     @staticmethod
     def reset_index():

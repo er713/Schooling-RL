@@ -6,8 +6,8 @@ import numpy as np
 from gym import Env
 from gym.spaces import Discrete, Box
 
-from school import Task
-from school.students import RashStudent
+from environment.task import Task
+from environment.rasch_student import RaschStudent
 
 
 class BaseSchoolEnvironment(Env, ABC):
@@ -38,8 +38,8 @@ class BaseSchoolEnvironment(Env, ABC):
 
         self.tasks = []
         self.test_task_ids = []
-        for task_id, (difficulty, skill_id) in enumerate(
-            product(self.POSSIBLE_TASK_DIFFICULTIES, range(skills_quantity))
+        for task_id, (skill_id, difficulty) in enumerate(
+            product(range(skills_quantity), self.POSSIBLE_TASK_DIFFICULTIES)
         ):
             self.tasks.append(Task({skill_id: difficulty}))
             if difficulty == 2:
@@ -55,9 +55,7 @@ class BaseSchoolEnvironment(Env, ABC):
         """
         :param action: Task given to student. During epoch with exam epoch action is ignored
         :return:
-            observation (np.array): vector of shape [1, 2*number of tasks] which is constructed as follows:
-                [number_of_not_solved_first_task, number_of_not_solved_second_task, ... ,
-                number_of_solved_first_task , number of_solved_second_task, ... ]
+            observation (np.array): described in child class
             reward (float) : reward obtained in this iteration
             done (bool): whether the episode has ended
             info (dict): after epoch with exam specific information about score:
@@ -96,7 +94,7 @@ class BaseSchoolEnvironment(Env, ABC):
         student_proficiency = np.clip(
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
-        self.student = RashStudent(id=-1, proficiency=list(student_proficiency))
+        self.student = RaschStudent(id=-1, proficiency=list(student_proficiency))
         self.iteration = 0
         self.reset_state()
         return self.state.flatten()
@@ -116,6 +114,11 @@ class GradesBookEnvironment(BaseSchoolEnvironment):
     For each task given by teacher, the number of successes and number of fails is returned .
     So the resulting vector is two times longer than vector of possible actions. The range of values is from 0
     to number of possible fails (so simply the time of learning before the exam).
+
+    In technical details the observation is
+    vector of shape [1, 2 * number of tasks] which is constructed as follows:
+        [number_of_not_solved_first_task, number_of_not_solved_second_task, ... ,
+        number_of_solved_first_task , number of_solved_second_task, ... ]
     """
 
     def __init__(self, skills_quantity: int, time_to_exam: int):
