@@ -1,7 +1,9 @@
 import fire
 import gym
+import wandb
 
 from actors.base_teacher import SimpleTeacher
+from actors.actor_critic.ac import AcorCriticTeacher
 
 
 def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):
@@ -26,10 +28,12 @@ def train(
     max_steps: int = 2000,
 ):
     initialize_environments(skills_quantity, time_to_exam)
-    actor = SimpleTeacher(env_name=env_name)
+    actor = AcorCriticTeacher(env_name=env_name)
+    wr = wandb.init(project="SchoolingRL", entity="er713")
 
     for epoch in range(max_steps):
         actor.step()
+    wr.finish()
 
 
 if __name__ == "__main__":
