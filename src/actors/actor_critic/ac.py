@@ -41,8 +41,8 @@ class AcorCriticTeacher:
         self.gamma = tf.constant(0.99)
         self.cut_state = self._state_cutting_func[env_name]
         self.n_last = 5  # TODO
-        self.epsilon = 0.9
-        self.epsilon_decay = 0.9997
+        self.epsilon = 1.
+        self.epsilon_decay = 0.99975
         self.state = tf.constant(self.cut_state(state, self.n_last,
                                                 self.env.iteration, self.env.number_of_tasks))
         self.actions = []
@@ -50,7 +50,7 @@ class AcorCriticTeacher:
     def step(self):
         state = self.state
         # Predict next action
-        if np.random.random() > self.epsilon:  # from actor
+        if np.random.random() > min(self.epsilon, 0.9):  # from actor
             logits = self.actor_nn(self.state)
             action = Categorical(logits=logits).sample()
         else:  # random
@@ -72,15 +72,14 @@ class AcorCriticTeacher:
 
         # Reset if end
         if done:
-            self.env.reset()
             p = {f"proficiency_{i}": p for i, p in enumerate(self.env.env.student._proficiency)}
             p.update({f"actions_{i}": a for i, a in enumerate(self.actions)})
-            p.update({"epsilon": self.epsilon})
+            p.update({"epsilon": min(self.epsilon, 0.9), "exam_score": info['exam_score_percentage']})
             wandb.log(p)
+            print(self.env.env.student._proficiency)  # hacks
+            self.env.reset()
             self.actions = []
             self.epsilon *= self.epsilon_decay
-            print(self.env.env.student._proficiency)  # hacks   , TODO: wandb support
-            # print(info['exam_score_percentage'])
 
 
 @tf.function
