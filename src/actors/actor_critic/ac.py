@@ -22,7 +22,7 @@ class AcorCriticTeacher:
 
     """
     _state_cutting_func = {
-        "gradesbook-v0": lambda x, *args: x,
+        "gradesbook-v0": lambda x, *args: [x],
         "gradeslist-v0": _cut_state_for_gradeslist
     }
 
