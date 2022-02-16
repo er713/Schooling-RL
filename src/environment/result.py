@@ -1,10 +1,15 @@
+from environment.task import Task
+
+
 class Result:
-    def __init__(self, mark: float, duration: float, task: object, idStudent: int) -> None:
+    def __init__(
+        self, mark: float, duration: float, task: Task, idStudent: int
+    ) -> None:
         """
         :param mark: result of task (for now 0 or 1 but in future it can continous [0,1])
-        :param duration: how long it take to solve the task 
+        :param duration: how long it take to solve the task
         :param task: task which has been done
-        :param idStudent: id of student who done the task 
+        :param idStudent: id of student who done the task
         """
         self.mark = mark
         self.duration = duration
