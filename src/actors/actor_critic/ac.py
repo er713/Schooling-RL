@@ -26,38 +26,55 @@ class AcorCriticTeacher:
         "gradeslist-v0": _cut_state_for_gradeslist
     }
 
-    def __init__(self, env_name):  # TODO gamma
+    def __init__(
+            self, env_name, project, entity, gamma, start_epsilon, min_epsilon, max_epsilon,
+            epsilon_decay, n_last, learning_rate=5.e-3
+    ):
         # Initialise env
         self.env: Env = gym.make(env_name)
         state = self.env.reset()
 
-        # Initialise NN and opts
+        # Initialise actors and optimizers
         self.actor_nn = ACNetwork(output_size=self.env.number_of_tasks)
         self.critic_nn = ACNetwork(output_size=1)
-        self.actor_opt = adam_v2.Adam()  # TODO lr
-        self.critic_opt = adam_v2.Adam()
+        self.actor_opt = adam_v2.Adam(learning_rate=learning_rate)
+        self.critic_opt = adam_v2.Adam(learning_rate=learning_rate)
 
         # Other
-        self.gamma = tf.constant(0.99)
+        self.gamma = tf.constant(gamma)
         self.cut_state = self._state_cutting_func[env_name]
-        self.n_last = 5  # TODO
-        self.epsilon = 1.
-        self.epsilon_decay = 0.99975
+        self.n_last = n_last
+        self.epsilon = start_epsilon
+        self.epsilon_decay = epsilon_decay
+        self.min_epsilon = min_epsilon
+        self.max_epsilon = max_epsilon
+        self.actions = []
         self.state = tf.constant(self.cut_state(state, self.n_last,
                                                 self.env.iteration, self.env.number_of_tasks))
-        self.actions = []
+
+        # Logger
+        self.wandb = wandb.init(project=project, entity=entity,
+                                config={
+                                    "learning_rate": learning_rate,
+                                    "gamma": float(self.gamma),
+                                    "env": env_name,
+                                    "start_epsilon": self.epsilon,
+                                    "min_epsilon": self.min_epsilon,
+                                    "max_epsilon": self.max_epsilon,
+                                    "epsilon_decay": self.epsilon_decay,
+                                    "n_last": self.n_last
+                                })
 
     def step(self):
         state = self.state
         # Predict next action
-        if np.random.random() > min(self.epsilon, 0.9):  # from actor
+        if np.random.random() > self._get_epsilon():  # from actor
             logits = self.actor_nn(self.state)
             action = Categorical(logits=logits).sample()
         else:  # random
             action = tf.constant(self.env.action_space.sample())
 
         # Feed environment
-        # print(state, int(action), self.epsilon)
         self.actions.append(int(action))
         observation, reward, done, info = self.env.step(self.actions[-1])
 
@@ -74,12 +91,15 @@ class AcorCriticTeacher:
         if done:
             p = {f"proficiency_{i}": p for i, p in enumerate(self.env.env.student._proficiency)}
             p.update({f"actions_{i}": a for i, a in enumerate(self.actions)})
-            p.update({"epsilon": min(self.epsilon, 0.9), "exam_score": info['exam_score_percentage']})
+            p.update({"epsilon": self._get_epsilon(), "exam_score": info['exam_score_percentage']})
             wandb.log(p)
             print(self.env.env.student._proficiency)  # hacks
             self.env.reset()
             self.actions = []
             self.epsilon *= self.epsilon_decay
+
+    def _get_epsilon(self):
+        return max(self.min_epsilon, min(self.epsilon, self.max_epsilon))
 
 
 @tf.function

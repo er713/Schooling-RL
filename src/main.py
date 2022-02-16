@@ -22,18 +22,33 @@ def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):
 
 
 def train(
-    env_name: str = "gradesbook-v0",
-    skills_quantity: int = 3,
-    time_to_exam: int = 25,
-    max_steps: int = 2000,
+        env_name: str = "gradesbook-v0",
+        skills_quantity: int = 3,
+        time_to_exam: int = 25,
+        max_steps: int = 2000,
+        gamma: float = 0.99,
+        learning_rate: float = 5.e-3,
+        start_epsilon: float = .9,
+        min_epsilon: float = .03,
+        max_epsilon: float = .9,
+        epsilon_decay: float = .99965,
+        n_last: int = 10,
 ):
     initialize_environments(skills_quantity, time_to_exam)
-    actor = AcorCriticTeacher(env_name=env_name)
-    wr = wandb.init(project="SchoolingRL", entity="er713")
+    actor = AcorCriticTeacher(env_name=env_name, project="SchoolingRL", entity="eryk", gamma=gamma,
+                              learning_rate=learning_rate, start_epsilon=start_epsilon, min_epsilon=min_epsilon,
+                              max_epsilon=max_epsilon, epsilon_decay=epsilon_decay, n_last=n_last)
+    actor.wandb.config['skills_quantity'] = skills_quantity
+    actor.wandb.config['time_to_exam'] = time_to_exam
+    actor.wandb.config['max_steps'] = max_steps
 
-    for epoch in range(max_steps):
-        actor.step()
-    wr.finish()
+    try:
+        for epoch in range(max_steps):
+            actor.step()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        actor.wandb.finish()
 
 
 if __name__ == "__main__":
