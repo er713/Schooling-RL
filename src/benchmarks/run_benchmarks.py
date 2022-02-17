@@ -25,10 +25,10 @@ model_to_train_params = {
         "epoch_len": 1,  # one batch per epoch, so epoch = iteration
     },
     "dqn": {
-        "batch_size": 256,
-        "replay_size": 256 * 5,
+        "batch_size": 32,
+        "replay_size": 32 * 5,
         "min_episode_reward": 0,
-        "eps_last_frame": 80_000,
+        "eps_last_frame": -1,
         "sync_rate": 16,
         "n_step": 5,
     },
@@ -53,17 +53,16 @@ for params in ParameterGrid(param_grid):
             "time_to_exam": episode_length,
         },
     )
-
     seed_everything(params["seed"])
     model_class = model_to_class[params["model"]]
     model_params = model_to_train_params[params["model"]]
 
-    model = model_class(env=params["env_name"], **model_params)
-    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking")
-
     required_actions = episode_length * 20000
     if params["model"] == "dqn":
         model_params["eps_last_frame"] = int(0.8 * required_actions)
+
+    model = model_class(env=params["env_name"], **model_params)
+    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking")
 
     trainer = Trainer(
         deterministic=False,

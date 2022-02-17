@@ -159,7 +159,7 @@ class UpdatedDQN(DQN):
                 done=is_done,
                 new_state=next_state,
             )
-            self.agent.update_epsilon(self.global_step * self.batch_size + i)
+            self.agent.update_epsilon(self.total_steps)
             self.buffer.append(exp)
             self.state = next_state
 
