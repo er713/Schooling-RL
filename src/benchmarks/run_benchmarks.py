@@ -1,13 +1,10 @@
-from argparse import ArgumentParser
-
 import gym
-from pl_bolts.models.rl import AdvantageActorCritic, DQN
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import WandbLogger
-
 from sklearn.model_selection import ParameterGrid
 
 from benchmarks.a2c import UpdatedA2C
+from benchmarks.dqn import UpdatedDQN
 
 param_grid = {
     "skills_quantity": [1, 2, 5, 10],
@@ -16,18 +13,21 @@ param_grid = {
     "env_name": ["gradesbook-v0"],
     # "env_name": ["gradesbook-v0", "gradeslist-v0"],
     # "model": ["a2c", "dqn"],
-    "model": ["a2c"],
+    "model": ["dqn"],
 }
 # iterations ale calculated to make the same number of episodes -> 10k
 # episode len = training_time -> skills_quantity * train_time_per_skill
 
-model_to_class = {"a2c": UpdatedA2C, "dqn": DQN}
+model_to_class = {"a2c": UpdatedA2C, "dqn": UpdatedDQN}
 model_to_train_params = {
     "a2c": {
         "batch_size": 256,
-        "epoch_len": 1,  # one batch so max epochs == 100 000 // 256
+        "epoch_len": 1,  # one batch per epoch, so epoch = iteration
     },
-    "dqn": {},
+    "dqn": {
+        "batch_size": 256,
+        "replay_size": 256 * 5,
+    },
 }
 
 
