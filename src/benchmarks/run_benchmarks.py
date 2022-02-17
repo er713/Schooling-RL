@@ -29,7 +29,7 @@ model_to_train_params = {
         "replay_size": 32 * 5,
         "min_episode_reward": 0,
         "eps_last_frame": -1,
-        "sync_rate": 16,
+        "sync_rate": 8,
         "n_step": 5,
     },
 }
