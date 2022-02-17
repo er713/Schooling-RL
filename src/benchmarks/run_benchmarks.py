@@ -27,9 +27,10 @@ model_to_train_params = {
     "dqn": {
         "batch_size": 256,
         "replay_size": 256 * 5,
+        "min_episode_reward": 0,
+        "eps_last_frame": 80_000
     },
 }
-
 
 for params in ParameterGrid(param_grid):
     episode_length = params["skills_quantity"] * params["train_time_per_skill"]
@@ -59,9 +60,14 @@ for params in ParameterGrid(param_grid):
     wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking")
 
     required_actions = episode_length * 20000
+    deterministic = True
+    if params["model"] == "dqn":
+        model_params["eps_last_frame"] = int(.8 * required_actions)
+        deterministic = False
+
     trainer = Trainer(
-        deterministic=True,
-        logger=None,
+        deterministic=deterministic,
+        logger=wandb_logger,
         max_epochs=required_actions // model_params["batch_size"],
     )
     trainer.fit(model)
