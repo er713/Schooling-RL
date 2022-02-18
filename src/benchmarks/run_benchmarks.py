@@ -65,19 +65,20 @@ for params in ParameterGrid(param_grid):
     model_class = model_to_class[params["model"]]
     model_params = model_to_train_params[params["model"]]
 
+    required_actions = episode_length * 20000
     if params["model"] == "dqn":
         model_params["eps_last_frame"] = int(0.8 * required_actions)
     elif params["model"] == "ppo":
         model_params["max_episode_len"] = episode_length
+        required_actions *= model_params["batch_size"]/model_params["steps_per_epoch"]
 
     model = model_class(env=params["env_name"], **model_params)
-    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking_ppo")
+    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking_ppo_test")
     wandb_logger.log_hyperparams(params)
 
-    required_actions = episode_length * 20000
     trainer = Trainer(
         deterministic=False,
-        logger=None,
+        logger=wandb_logger,
         max_epochs=required_actions // model_params["batch_size"],
         gpus=1,
     )
