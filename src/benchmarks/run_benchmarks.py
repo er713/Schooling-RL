@@ -9,8 +9,8 @@ from benchmarks.ppo import UpdatedPPO
 from benchmarks.random_agent import RandomAgent
 
 param_grid = {
-    "model": ["a2c", "ppo", "random"],
-    "skills_quantity": [1, 2, 5, 7],
+    "skills_quantity": [1, 3, 5, 7],
+    "model": ["random", "ppo", "a2c"],
     "train_time_per_skill": [10],
     "seed": [0],
     "env_name": ["gradesbook-v0"],
@@ -27,6 +27,7 @@ model_to_train_params = {
     "ppo": {
         "batch_size": 512,
         "steps_per_epoch": 512,
+        "nb_optim_iters": 1,
     },
     "random": {"batch_size": 256},
 }
@@ -48,7 +49,7 @@ for params in ParameterGrid(param_grid):
     model_params = model_to_train_params[params["model"]]
 
     model = model_class(env=params["env_name"], **model_params)
-    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarking-second-time-again-(2)")
+    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarks")
     wandb_logger.log_hyperparams(params)
 
     required_actions = episode_length * 15000
