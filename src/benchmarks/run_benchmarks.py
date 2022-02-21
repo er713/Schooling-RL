@@ -12,7 +12,7 @@ param_grid = {
     "skills_quantity": [1, 3, 5, 7],
     "model": ["random", "ppo", "a2c"],
     "train_time_per_skill": [10],
-    "seed": [0],
+    "seed": [0, 1, 2, 3, 4],
     "env_name": ["gradesbook-v0"],
 }
 # iterations ale calculated to make the same number of episodes -> 10k
@@ -49,10 +49,10 @@ for params in ParameterGrid(param_grid):
     model_params = model_to_train_params[params["model"]]
 
     model = model_class(env=params["env_name"], **model_params)
-    wandb_logger = WandbLogger(project="schooling-rl", name="benchmarks")
+    wandb_logger = WandbLogger(project="schooling-rl", name="benchamrks(6)")
     wandb_logger.log_hyperparams(params)
 
-    required_actions = episode_length * 15000
+    required_actions = episode_length * 25000
     trainer = Trainer(
         deterministic=False,
         logger=wandb_logger,
