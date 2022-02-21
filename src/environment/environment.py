@@ -83,7 +83,8 @@ class BaseSchoolEnvironment(Env, ABC):
         if done:
             info = {
                 "exam_score": reward,
-                "exam_score_percentage": reward / self.number_of_tasks,
+                "exam_score_percentage": reward / (2 * self.skills_quantity),
+                "final_proficiencies": self.student._proficiency,
             }
 
         self.iteration += 1
