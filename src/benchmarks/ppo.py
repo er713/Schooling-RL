@@ -219,7 +219,7 @@ class UpdatedPPO(PPO):
                 "avg_batch_std_proficiency": proficiencies.std(axis=1).mean(),
             },
             logger=True,
-            prog_bar=True
+            prog_bar=True,
         )
 
         if optimizer_idx == 0:
