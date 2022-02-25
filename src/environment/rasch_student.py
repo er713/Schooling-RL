@@ -64,7 +64,7 @@ class RaschStudent:
         baseChange = np.zeros(len(self._proficiency))
         np.maximum(diffs, self._baseChangeParam, out=baseChange, where=taskSkillsMask)
         correctness_mod = 3 / 2 if result.mark == 1 else 2 / 3
-        changeStrength = probaToSolve**correctness_mod
+        changeStrength = probaToSolve ** correctness_mod
         for idx, _ in enumerate(self._proficiency):
             self._proficiency[idx] += baseChange[idx] * changeStrength
             self._proficiency[idx] = max(min(self._proficiency[idx], 3), -3)
