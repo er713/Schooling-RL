@@ -1,7 +1,7 @@
 import fire
 import gym
 
-from actors.base_teacher import SimpleTeacher
+from actors.simple_teacher import SimpleTeacher
 
 
 def initialize_environments(skills_quantity: int = 1, time_to_exam: int = 10):

@@ -6,7 +6,7 @@ from gym import Env
 class SimpleTeacher:
     """
     The teacher estimates the difficulty of the task based on numbers of correctly and not correctly solved tasks.
-    The teacher always gives the student the task with the highest estimate
+    The teacher always gives the student the task with the highest estimate for the least trained skills.
     """
 
     def __init__(self, env_name):
