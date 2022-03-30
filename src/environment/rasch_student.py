@@ -75,7 +75,7 @@ class RaschStudent:
         )
 
         correctness_mod = 3 / 2 if is_task_solved else 2 / 3
-        change_strength = probability_to_solve_task ** correctness_mod
+        change_strength = probability_to_solve_task**correctness_mod
         for idx in range(len(self._proficiency)):
             self._proficiency[idx] += base_change[idx] * change_strength
 
