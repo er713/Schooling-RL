@@ -22,7 +22,7 @@ class Task:
         Create random Task with specified parameters.
         :param n_skills: Number of skills.
         :param min_skills_assigned: Minimal number of skills which can assigned to the task. It has to be greater than 0.
-        :param max_skills_assigned: Maximal number of skills which task has to have. Smaller or equal than nSkills.
+        :param max_skills_assigned: Maximal number of skills which task has to have. Smaller or equal than n_skills.
         If None, equals nSkills.
         :param difficulties_range: Tuple of minimum and maximum difficulties that task can have.
         :return: Random Task
@@ -30,7 +30,7 @@ class Task:
         if max_skills_assigned is None:
             max_skills_assigned = n_skills
 
-        # number of skills in one task depends on exponential distribution with lambda = 0.8 scaled and rounded to [minSkill, maxSkill]
+        # number of skills in one task depends on exponential distribution with lambda = 0.8 scaled and rounded to [min_skills_assigned, max_skills_assigned]
         skills_quantity_distribution = (
             np.random.exponential(10 / 8, 1)
             / 4
