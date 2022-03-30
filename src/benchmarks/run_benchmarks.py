@@ -4,9 +4,9 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import WandbLogger
 from sklearn.model_selection import ParameterGrid
 
-from benchmarks.a2c import UpdatedA2C
-from benchmarks.ppo import UpdatedPPO
-from benchmarks.random_agent import RandomAgent
+from actors.a2c import UpdatedA2C
+from actors.ppo import UpdatedPPO
+from actors.random_agent import RandomAgent
 
 param_grid = {
     "skills_quantity": [1, 3, 5, 7],
