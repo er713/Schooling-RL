@@ -28,8 +28,17 @@ More advanced uses of the algorithms, and the parameters used during the benchma
 src/benchmarks/run_benchmarks.py
 ```
 
-### Autoformatting code
-`black src`
+In order to format code run:
+
+```bash
+black src
+```
+
+To run unit tests:
+
+```bash
+pytest
+```
 
 ### Citation:
 ```
