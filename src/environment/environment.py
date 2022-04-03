@@ -68,12 +68,11 @@ class BaseSchoolEnvironment(Env, ABC):
         reward = 0
         tasks_todo = [action] if is_learning_action else self.test_task_ids
         for i, action in enumerate(tasks_todo):
-            result = self.student.solve_task(
-                self.tasks[action], isExam=not is_learning_action
+            is_task_solved = self.student.solve_task(
+                self.tasks[action], is_exam=not is_learning_action
             )
-            is_task_solved = result.mark
             self.update_state(
-                is_task_solved=bool(is_task_solved), task_id=action, task_in_epoch_id=i
+                is_task_solved=is_task_solved, task_id=action, task_in_epoch_id=i
             )
 
             if is_task_solved and not is_learning_action:
@@ -95,7 +94,7 @@ class BaseSchoolEnvironment(Env, ABC):
         student_proficiency = np.clip(
             np.random.normal(scale=1 / 3, size=self.skills_quantity), -1, 1
         )
-        self.student = RaschStudent(id=-1, proficiency=list(student_proficiency))
+        self.student = RaschStudent(proficiency=list(student_proficiency))
         self.iteration = 0
         self.reset_state()
         return self.state.flatten()
