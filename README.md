@@ -7,7 +7,7 @@ Such an environment would allow for external interaction, which would involve th
 
 In the image below, we can see the growth of students' average intrinsic proficiency over time as the teacher advances (students learn from the beginning in each epoch). Detailed explanations of what is in the plots and how it was calculated can be found in the publication.
 
-![plot](./src/benchmarks/plot.svg)
+![plot](./src/benchmarks/plot_1_1_fontscale.svg)
 
 ### Installation
 Simply clone the repository and then install the dependencies:
